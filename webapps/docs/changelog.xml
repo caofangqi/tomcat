@@ -44,7 +44,43 @@
   They eventually become mixed with the numbered issues (i.e., numbered
   issues do not "pop up" wrt. others).
 -->
-<section name="Tomcat 9.0.21 (markt)" rtext="in development">
+<section name="Tomcat 9.0.22 (markt)" rtext="in development">
+  <subsection name="Coyote">
+    <changelog>
+      <fix>
+        Remove a source of potential deadlocks when using HTTP/2 when the
+        Connector is configured with <code>useAsyncIO</code> as
+        <code>true</code>. (markt)
+      </fix>
+      <fix>
+        <bug>63523</bug>: Restore SSLUtilBase methods as protected to preserve
+        compatibility. (remm)
+      </fix>
+      <fix>Fix typo in UTF-32LE charset name. Patch by zhanhb vi Github.
+        (fschumacher)
+      </fix>
+    </changelog>
+  </subsection>
+  <subsection name="Jasper">
+    <changelog>
+      <add>
+        Include file names if SMAP processor is unable to delete or rename a
+        class file during SMAP generation. (markt)
+      </add>
+    </changelog>
+  </subsection>
+  <subsection name="WebSocket">
+    <changelog>
+      <fix>
+        <bug>63521</bug>: As required by the WebSocket specification, if a POJO
+        that is deployed as a result of the SCI scan for annotated POJOs is
+        subsequently deployed via the programmatic API ignore the programmatic
+        deployment. (markt)
+      </fix>
+    </changelog>
+  </subsection>
+</section>
+<section name="Tomcat 9.0.21 (markt)" rtext="2019-06-07">
   <subsection name="Catalina">
     <changelog>
       <add>
@@ -91,6 +127,11 @@
         before removal of the child from the internal child collection.
         (remm)
       </scode>
+      <add>
+        Remove any fragment included in the target path used to obtain a
+        <code>RequestDispatcher</code>. The requested target path is logged as a
+        warning since this is an application error. (markt)
+      </add>
     </changelog>
   </subsection>
   <subsection name="Coyote">
@@ -170,6 +211,11 @@
       <fix>
         Fix HTTP/2 end of stream concurrency with async. (remm)
       </fix>
+      <fix>
+        Correct a bug in the stream flushing code that could lead to multiple
+        threads processing the stream concurrently which in turn could cause
+        errors processing the stream. (markt)
+      </fix>
     </changelog>
   </subsection>
   <subsection name="Cluster">
@@ -221,8 +267,8 @@
         Switch from FindBugs to SpotBugs. (fschumacher)
       </update>
       <update>
-        Start Graal native image compatibility. Support is initially targeted
-        at the tomcat-maven packaging. (remm)
+        Start Graal native image compatibility, using the tomcat-maven
+        packaging. (remm)
       </update>
       <fix>
         <bug>63403</bug>: Fix TestHttp2InitialConnection test failures when
@@ -249,6 +295,11 @@
         Expand the coverage and quality of the Simplified Chinese translations
         provided with Apache Tomcat. Includes contributions by 諵. (markt)
       </add>
+      <fix>
+        Use the <code>test</code> command to check for terminal availability
+        rather than the <code>tty</code> command since the <code>tty</code>
+        based test fails on non-English locales. (markt)
+      </fix>
     </changelog>
   </subsection>
 </section>
@@ -265,7 +316,7 @@
         file. Identified by Coverity scan. (markt)
       </fix>
       <fix>
-        Fix a potential concurrency issue in the StringCache identifed by
+        Fix a potential concurrency issue in the StringCache identified by
         Coverity scan. (markt)
       </fix>
       <fix>
@@ -305,7 +356,7 @@
       </add>
       <add>
         <bug>63361</bug>: Add a new method
-        (<code>Registry.disableRegistry()</code>) that can be used to disbale
+        (<code>Registry.disableRegistry()</code>) that can be used to disable
         JMX registration of Tomcat components providing it is called before the
         first component is registered. (markt)
       </add>
@@ -381,7 +432,7 @@
       </update>
       <fix>
         Expand HTTP/2 timeout handling to include connection window exhaustion
-        on write. (markt)
+        on write. This is the fix for CVE-2019-10072. (markt)
       </fix>
     </changelog>
   </subsection>

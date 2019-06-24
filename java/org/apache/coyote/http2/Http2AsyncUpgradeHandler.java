@@ -39,6 +39,10 @@ import org.apache.tomcat.util.net.SocketWrapperBase.BlockingMode;
 public class Http2AsyncUpgradeHandler extends Http2UpgradeHandler {
 
     private static final ByteBuffer[] BYTEBUFFER_ARRAY = new ByteBuffer[0];
+    // Ensures headers are generated and then written for one thread at a time.
+    // Because of the compression used, headers need to be written to the
+    // network in the same order they are generated.
+    private final Object headerWriteLock = new Object();
     private Throwable error = null;
     private IOException applicationIOE = null;
 
@@ -80,10 +84,12 @@ public class Http2AsyncUpgradeHandler extends Http2UpgradeHandler {
         return new AsyncPingManager();
     }
 
+
     @Override
-    boolean hasAsyncIO() {
+    public boolean hasAsyncIO() {
         return true;
     }
+
 
     @Override
     protected void processConnection(WebConnection webConnection,
@@ -167,8 +173,7 @@ public class Http2AsyncUpgradeHandler extends Http2UpgradeHandler {
     @Override
     void writeHeaders(Stream stream, int pushedStreamId, MimeHeaders mimeHeaders,
             boolean endOfStream, int payloadSize) throws IOException {
-        // This ensures the Stream processing thread has control of the socket.
-        synchronized (socketWrapper) {
+        synchronized (headerWriteLock) {
             AsyncHeaderFrameBuffers headerFrameBuffers = (AsyncHeaderFrameBuffers)
                     doWriteHeaders(stream, pushedStreamId, mimeHeaders, endOfStream, payloadSize);
             if (headerFrameBuffers != null) {
