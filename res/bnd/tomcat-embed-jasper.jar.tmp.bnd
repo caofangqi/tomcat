@@ -12,11 +12,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-Bundle-Name: tomcat-embed-jasper-el
-Bundle-SymbolicName: org.apache.tomcat-embed-jasper-el
+Automatic-Module-Name: org.apache.tomcat-embed-jasper
+Bundle-Name: tomcat-embed-jasper
+Bundle-SymbolicName: org.apache.tomcat-embed-jasper
 Bundle-Version: @VERSION@
 Export-Package: \
-    javax.el,\
-    org.apache.el,\
-    org.apache.el.lang,\
-    org.apache.el.parser
+    javax.servlet.jsp,\
+    javax.servlet.jsp.el,\
+    javax.servlet.jsp.resources,\
+    javax.servlet.jsp.tagext,\
+    org.apache.jasper,\
+    org.apache.jasper.compiler,\
+    org.apache.jasper.compiler.tagplugin,\
+    org.apache.jasper.el,\
+    org.apache.jasper.runtime,\
+    org.apache.jasper.security,\
+    org.apache.jasper.servlet,\
+    org.apache.jasper.tagplugins.jstl,\
+    org.apache.jasper.tagplugins.jstl.core,\
+    org.apache.jasper.util

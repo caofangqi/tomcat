@@ -80,6 +80,7 @@ import org.apache.catalina.util.URLEncoder;
 import org.apache.catalina.webresources.CachedResource;
 import org.apache.tomcat.util.buf.B2CConverter;
 import org.apache.tomcat.util.http.ResponseUtil;
+import org.apache.tomcat.util.http.parser.ContentRange;
 import org.apache.tomcat.util.http.parser.Ranges;
 import org.apache.tomcat.util.res.StringManager;
 import org.apache.tomcat.util.security.Escape;
@@ -150,6 +151,8 @@ public class DefaultServlet extends HttpServlet {
      * Full range marker.
      */
     protected static final ArrayList<Range> FULL = new ArrayList<>();
+
+    private static final Range IGNORE = new Range();
 
     /**
      * MIME multipart separation string
@@ -271,6 +274,12 @@ public class DefaultServlet extends HttpServlet {
      */
     protected transient SortManager sortManager;
 
+    /**
+     * Flag that indicates whether partial PUTs are permitted.
+     */
+    private boolean allowPartialPut = true;
+
+
     // --------------------------------------------------------- Public Methods
 
     /**
@@ -370,6 +379,10 @@ public class DefaultServlet extends HttpServlet {
 
                 sortManager = new SortManager(sortDirectoriesFirst);
             }
+        }
+
+        if (getServletConfig().getInitParameter("allowPartialPut") != null) {
+            allowPartialPut = Boolean.parseBoolean(getServletConfig().getInitParameter("allowPartialPut"));
         }
     }
 
@@ -602,6 +615,11 @@ public class DefaultServlet extends HttpServlet {
 
         Range range = parseContentRange(req, resp);
 
+        if (range == null) {
+            // Processing error. parseContentRange() set the error code
+            return;
+        }
+
         InputStream resourceInputStream = null;
 
         try {
@@ -609,11 +627,11 @@ public class DefaultServlet extends HttpServlet {
             // resource - create a temp. file on the local filesystem to
             // perform this operation
             // Assume just one range is specified for now
-            if (range != null) {
+            if (range == IGNORE) {
+                resourceInputStream = req.getInputStream();
+            } else {
                 File contentFile = executePartialPut(req, range, path);
                 resourceInputStream = new FileInputStream(contentFile);
-            } else {
-                resourceInputStream = req.getInputStream();
             }
 
             if (resources.write(path, resourceInputStream, true)) {
@@ -909,7 +927,7 @@ public class DefaultServlet extends HttpServlet {
             }
         }
 
-        ArrayList<Range> ranges = null;
+        ArrayList<Range> ranges = FULL;
         long contentLength = -1L;
 
         if (resource.isDirectory()) {
@@ -935,6 +953,9 @@ public class DefaultServlet extends HttpServlet {
 
                 // Parse range specifier
                 ranges = parseRange(request, response, resource);
+                if (ranges == null) {
+                    return;
+                }
 
                 // ETag header
                 response.setHeader("ETag", eTag);
@@ -1013,12 +1034,7 @@ public class DefaultServlet extends HttpServlet {
             conversionRequired = false;
         }
 
-        if (resource.isDirectory() ||
-                isError ||
-                ( (ranges == null || ranges.isEmpty())
-                        && request.getHeader("Range") == null ) ||
-                ranges == FULL ) {
-
+        if (resource.isDirectory() || isError || ranges == FULL ) {
             // Set the appropriate output headers
             if (contentType != null) {
                 if (debug > 0)
@@ -1375,7 +1391,9 @@ public class DefaultServlet extends HttpServlet {
      *
      * @param request The servlet request we are processing
      * @param response The servlet response we are creating
-     * @return the range object
+     * @return the partial content-range, {@code null} if the content-range
+     *         header was invalid or {@code #IGNORE} if there is no header to
+     *         process
      * @throws IOException an IO error occurred
      */
     protected Range parseContentRange(HttpServletRequest request,
@@ -1383,44 +1401,37 @@ public class DefaultServlet extends HttpServlet {
         throws IOException {
 
         // Retrieving the content-range header (if any is specified
-        String rangeHeader = request.getHeader("Content-Range");
+        String contentRangeHeader = request.getHeader("Content-Range");
 
-        if (rangeHeader == null)
+        if (contentRangeHeader == null) {
+            return IGNORE;
+        }
+
+        if (!allowPartialPut) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return null;
+        }
+
+        ContentRange contentRange = ContentRange.parse(new StringReader(contentRangeHeader));
+
+        if (contentRange == null) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return null;
+        }
+
 
         // bytes is the only range unit supported
-        if (!rangeHeader.startsWith("bytes")) {
+        if (!contentRange.getUnits().equals("bytes")) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return null;
         }
 
-        rangeHeader = rangeHeader.substring(6).trim();
-
-        int dashPos = rangeHeader.indexOf('-');
-        int slashPos = rangeHeader.indexOf('/');
-
-        if (dashPos == -1) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
-            return null;
-        }
-
-        if (slashPos == -1) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
-            return null;
-        }
-
+        // TODO: Remove the internal representation and use Ranges
+        // Convert to internal representation
         Range range = new Range();
-
-        try {
-            range.start = Long.parseLong(rangeHeader.substring(0, dashPos));
-            range.end =
-                Long.parseLong(rangeHeader.substring(dashPos + 1, slashPos));
-            range.length = Long.parseLong
-                (rangeHeader.substring(slashPos + 1, rangeHeader.length()));
-        } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
-            return null;
-        }
+        range.start = contentRange.getStart();
+        range.end = contentRange.getEnd();
+        range.length = contentRange.getLength();
 
         if (!range.validate()) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
@@ -1428,7 +1439,6 @@ public class DefaultServlet extends HttpServlet {
         }
 
         return range;
-
     }
 
 
@@ -1438,12 +1448,17 @@ public class DefaultServlet extends HttpServlet {
      * @param request   The servlet request we are processing
      * @param response  The servlet response we are creating
      * @param resource  The resource
-     * @return a list of ranges
+     * @return a list of ranges, {@code null} if the range header was invalid or
+     *         {@code #FULL} if the Range header should be ignored.
      * @throws IOException an IO error occurred
      */
     protected ArrayList<Range> parseRange(HttpServletRequest request,
             HttpServletResponse response,
             WebResource resource) throws IOException {
+
+        // Range headers are only valid on GET requests. That implies they are
+        // also valid on HEAD requests. This method is only called by doGet()
+        // and doHead() so no need to check the request method.
 
         // Checking If-Range
         String headerValue = request.getHeader("If-Range");
@@ -1461,45 +1476,55 @@ public class DefaultServlet extends HttpServlet {
             long lastModified = resource.getLastModified();
 
             if (headerValueTime == (-1L)) {
-
                 // If the ETag the client gave does not match the entity
                 // etag, then the entire entity is returned.
-                if (!eTag.equals(headerValue.trim()))
+                if (!eTag.equals(headerValue.trim())) {
                     return FULL;
-
+                }
             } else {
-
-                // If the timestamp of the entity the client got is older than
+                // If the timestamp of the entity the client got differs from
                 // the last modification date of the entity, the entire entity
                 // is returned.
-                if (lastModified > (headerValueTime + 1000))
+                if (Math.abs(lastModified  -headerValueTime) > 1000) {
                     return FULL;
-
+                }
             }
-
         }
 
         long fileLength = resource.getContentLength();
 
         if (fileLength == 0) {
-            return null;
+            // Range header makes no sense for a zero length resource. Tomcat
+            // therefore opts to ignore it.
+            return FULL;
         }
 
         // Retrieving the range header (if any is specified
         String rangeHeader = request.getHeader("Range");
 
         if (rangeHeader == null) {
-            return null;
+            // No Range header is the same as ignoring any Range header
+            return FULL;
         }
 
-        Ranges ranges = Ranges.parseRanges(new StringReader(rangeHeader));
+        Ranges ranges = Ranges.parse(new StringReader(rangeHeader));
 
-        // bytes is the only range unit supported (and I don't see the point
-        // of adding new ones).
-        if (ranges == null || !ranges.getUnits().equals("bytes")) {
+        if (ranges == null) {
+            // The Range header is present but not formatted correctly.
+            // Could argue for a 400 response but 416 is more specific.
+            // There is also the option to ignore the (invalid) Range header.
+            // RFC7233#4.4 notes that many servers do ignore the Range header in
+            // these circumstances but Tomcat has always returned a 416.
             response.addHeader("Content-Range", "bytes */" + fileLength);
             response.sendError(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
             return null;
+        }
+
+        // bytes is the only range unit supported (and I don't see the point
+        // of adding new ones).
+        if (!ranges.getUnits().equals("bytes")) {
+            // RFC7233#3.1 Servers must ignore range units they don't understand
+            return FULL;
         }
 
         // TODO: Remove the internal representation and use Ranges

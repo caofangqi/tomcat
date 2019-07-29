@@ -36,6 +36,7 @@ import java.util.Stack;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.logging.Level;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import javax.servlet.Servlet;
@@ -67,10 +68,12 @@ import org.apache.catalina.core.StandardService;
 import org.apache.catalina.core.StandardWrapper;
 import org.apache.catalina.realm.GenericPrincipal;
 import org.apache.catalina.realm.RealmBase;
+import org.apache.catalina.security.SecurityClassLoad;
 import org.apache.catalina.util.ContextName;
 import org.apache.catalina.util.IOTools;
 import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.buf.UriUtil;
+import org.apache.tomcat.util.compat.JreCompat;
 import org.apache.tomcat.util.descriptor.web.LoginConfig;
 import org.apache.tomcat.util.file.ConfigFileLoader;
 import org.apache.tomcat.util.file.ConfigurationSource;
@@ -1385,6 +1388,17 @@ public class Tomcat {
         return result;
     }
 
+    static {
+        // Graal native images don't load any configuration except the VM default
+        if (JreCompat.isGraalAvailable()) {
+            try (InputStream is = new FileInputStream(new File(System.getProperty("java.util.logging.config.file", "conf/logging.properties")))) {
+                LogManager.getLogManager().readConfiguration(is);
+            } catch (SecurityException | IOException e) {
+                // Ignore, the VM default will be used
+            }
+        }
+    }
+
     /**
      * Main executable method for use with a Maven packager.
      * @param args the command line arguments
@@ -1397,6 +1411,7 @@ public class Tomcat {
                 Registry.disableRegistry();
             }
         }
+        SecurityClassLoad.securityClassLoad(Thread.currentThread().getContextClassLoader());
         org.apache.catalina.startup.Tomcat tomcat = new org.apache.catalina.startup.Tomcat();
         // Create a Catalina instance and let it parse the configuration files
         // It will also set a shutdown hook to stop the Server when needed
