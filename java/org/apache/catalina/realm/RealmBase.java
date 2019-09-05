@@ -470,7 +470,7 @@ public abstract class RealmBase extends LifecycleMBeanBase implements Realm {
      * {@inheritDoc}
      */
     @Override
-    public Principal authenticate(GSSContext gssContext, boolean storeCreds) {
+    public Principal authenticate(GSSContext gssContext, boolean storeCred) {
         if (gssContext.isEstablished()) {
             GSSName gssName = null;
             try {
@@ -480,25 +480,30 @@ public abstract class RealmBase extends LifecycleMBeanBase implements Realm {
             }
 
             if (gssName!= null) {
+                GSSCredential gssCredential = null;
+                if (storeCred) {
+                    if (gssContext.getCredDelegState()) {
+                        try {
+                            gssCredential = gssContext.getDelegCred();
+                        } catch (GSSException e) {
+                            log.warn(sm.getString(
+                                    "realmBase.delegatedCredentialFail", gssName), e);
+                        }
+                    } else {
+                        if (log.isDebugEnabled()) {
+                            log.debug(sm.getString(
+                                    "realmBase.credentialNotDelegated", gssName));
+                        }
+                    }
+                }
+
                 String name = gssName.toString();
 
                 if (isStripRealmForGss()) {
                     int i = name.indexOf('@');
                     if (i > 0) {
-                        // Zero so we don;t leave a zero length name
+                        // Zero so we don't leave a zero length name
                         name = name.substring(0, i);
-                    }
-                }
-                GSSCredential gssCredential = null;
-                if (storeCreds && gssContext.getCredDelegState()) {
-                    try {
-                        gssCredential = gssContext.getDelegCred();
-                    } catch (GSSException e) {
-                        if (log.isDebugEnabled()) {
-                            log.debug(sm.getString(
-                                    "realmBase.delegatedCredentialFail", name),
-                                    e);
-                        }
                     }
                 }
                 return getPrincipal(name, gssCredential);
@@ -851,7 +856,7 @@ public abstract class RealmBase extends LifecycleMBeanBase implements Realm {
                     log.debug("  No user authenticated, cannot grant access");
             } else {
                 for (int j = 0; j < roles.length; j++) {
-                    if (hasRole(null, principal, roles[j])) {
+                    if (hasRole(request.getWrapper(), principal, roles[j])) {
                         status = true;
                         if( log.isDebugEnabled() )
                             log.debug( "Role found:  " + roles[j]);
@@ -915,7 +920,7 @@ public abstract class RealmBase extends LifecycleMBeanBase implements Realm {
      */
     @Override
     public boolean hasRole(Wrapper wrapper, Principal principal, String role) {
-        // Check for a role alias defined in a <security-role-ref> element
+        // Check for a role alias
         if (wrapper != null) {
             String realRole = wrapper.findSecurityReference(role);
             if (realRole != null) {

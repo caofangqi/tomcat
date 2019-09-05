@@ -517,6 +517,12 @@ public class AprEndpoint extends AbstractEndpoint<Long,Long> implements SNICallB
                     serverSock = 0;
                 }
             }
+            // Close any sockets not in the poller performing blocking
+            // read/writes. Need to do this before destroying the poller since
+            // that will also destroy the root pool for these sockets.
+            for (Long s : connections.keySet()) {
+                Socket.shutdown(s.longValue(), Socket.APR_SHUTDOWN_READWRITE);
+            }
             try {
                 poller.destroy();
             } catch (Exception e) {
@@ -1633,25 +1639,15 @@ public class AprEndpoint extends AbstractEndpoint<Long,Long> implements SNICallB
         private volatile boolean sendfileRunning = true;
 
         /**
-         * Create the sendfile poller. With some versions of APR, the maximum
-         * poller size will be 62 (recompiling APR is necessary to remove this
-         * limitation).
+         * Create the sendfile poller.
          */
         protected void init() {
             pool = Pool.create(serverSockPool);
             int size = sendfileSize;
             if (size <= 0) {
-                size = (OS.IS_WIN32 || OS.IS_WIN64) ? (1 * 1024) : (16 * 1024);
+                size = 16 * 1024;
             }
             sendfilePollset = allocatePoller(size, pool, getConnectionTimeout());
-            if (sendfilePollset == 0 && size > 1024) {
-                size = 1024;
-                sendfilePollset = allocatePoller(size, pool, getConnectionTimeout());
-            }
-            if (sendfilePollset == 0) {
-                size = 62;
-                sendfilePollset = allocatePoller(size, pool, getConnectionTimeout());
-            }
             desc = new long[size * 2];
             sendfileData = new HashMap<>(size);
             addS = new ArrayList<>();
@@ -1982,6 +1978,7 @@ public class AprEndpoint extends AbstractEndpoint<Long,Long> implements SNICallB
                                 getConnectionTimeout(), Poll.APR_POLLIN);
                     } else {
                         // Close socket and pool
+                        getHandler().process(socket, SocketEvent.CONNECT_FAIL);
                         closeSocket(socket.getSocket().longValue());
                         socket = null;
                     }
@@ -1989,6 +1986,7 @@ public class AprEndpoint extends AbstractEndpoint<Long,Long> implements SNICallB
                     // Process the request from this socket
                     if (!setSocketOptions(socket)) {
                         // Close socket and pool
+                        getHandler().process(socket, SocketEvent.CONNECT_FAIL);
                         closeSocket(socket.getSocket().longValue());
                         socket = null;
                         return;

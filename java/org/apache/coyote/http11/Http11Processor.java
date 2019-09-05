@@ -176,7 +176,7 @@ public class Http11Processor extends AbstractProcessor {
         // Create and add buffered input filter
         inputBuffer.addFilter(new BufferedInputFilter());
 
-        // Create and add the chunked filters.
+        // Create and add the gzip filters.
         //inputBuffer.addFilter(new GzipInputFilter());
         outputBuffer.addFilter(new GzipOutputFilter());
 
@@ -276,8 +276,6 @@ public class Http11Processor extends AbstractProcessor {
 
         // Setting up the I/O
         setSocketWrapper(socketWrapper);
-        inputBuffer.init(socketWrapper);
-        outputBuffer.init(socketWrapper);
 
         // Flags
         keepAlive = true;
@@ -502,6 +500,14 @@ public class Http11Processor extends AbstractProcessor {
                 }
             }
         }
+    }
+
+
+    @Override
+    protected final void setSocketWrapper(SocketWrapperBase<?> socketWrapper) {
+        super.setSocketWrapper(socketWrapper);
+        inputBuffer.init(socketWrapper);
+        outputBuffer.init(socketWrapper);
     }
 
 

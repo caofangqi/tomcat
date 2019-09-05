@@ -39,7 +39,7 @@ import org.apache.tomcat.util.res.StringManager;
 
 /**
  * Provides functionality and attributes common to all supported protocols
- * (currently HTTP and AJP).
+ * (currently HTTP and AJP) for processing a single request/response.
  */
 public abstract class AbstractProcessor extends AbstractProcessorLight implements ActionHook {
 
@@ -149,7 +149,7 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
      * Set the socket wrapper being used.
      * @param socketWrapper The socket wrapper
      */
-    protected final void setSocketWrapper(SocketWrapperBase<?> socketWrapper) {
+    protected void setSocketWrapper(SocketWrapperBase<?> socketWrapper) {
         this.socketWrapper = socketWrapper;
     }
 
@@ -628,6 +628,13 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
     }
 
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Sub-classes of this base class represent a single request/response pair.
+     * The timeout to be processed is, therefore, the Servlet asynchronous
+     * processing timeout.
+     */
     @Override
     public void timeoutAsync(long now) {
         if (now < 0) {
@@ -944,6 +951,7 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
      */
     protected abstract boolean flushBufferedWrite() throws IOException ;
 
+
     /**
      * Perform any necessary clean-up processing if the dispatch resulted in the
      * completion of processing for the current request.
@@ -955,4 +963,18 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
      *         request
      */
     protected abstract SocketState dispatchEndRequest() throws IOException;
+
+
+    @Override
+    protected final void logAccess(SocketWrapperBase<?> socketWrapper) throws IOException {
+        // Set the socket wrapper so the access log can read the socket related
+        // information (e.g. client IP)
+        setSocketWrapper(socketWrapper);
+        // Setup the minimal request information
+        request.setStartTime(System.currentTimeMillis());
+        // Setup the minimal response information
+        response.setStatus(400);
+        response.setError();
+        getAdapter().log(request, response, 0);
+    }
 }
