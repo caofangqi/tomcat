@@ -201,14 +201,14 @@ public class RewriteRule {
 
     /**
      *  This forces the current URL to be forbidden, i.e., it immediately sends
-     *  back a HTTP response of 403 (FORBIDDEN). Use this flag in conjunction
+     *  back an HTTP response of 403 (FORBIDDEN). Use this flag in conjunction
      *  with appropriate RewriteConds to conditionally block some URLs.
      */
     protected boolean forbidden = false;
 
     /**
      *  This forces the current URL to be gone, i.e., it immediately sends
-     *  back a HTTP response of 410 (GONE). Use this flag to mark pages which
+     *  back an HTTP response of 410 (GONE). Use this flag to mark pages which
      *  no longer exist as gone.
      */
     protected boolean gone = false;
@@ -299,7 +299,7 @@ public class RewriteRule {
 
     /**
      *  Prefix Substitution with http://thishost[:thisport]/ (which makes the
-     *  new URL a URI) to force a external redirection. If no code is given
+     *  new URL a URI) to force an external redirection. If no code is given
      *  an HTTP response of 302 (FOUND, previously MOVED TEMPORARILY) is used.
      *  If you want to  use other response codes in the range 300-399 just
      *  specify them as a number or use one of the following symbolic names:

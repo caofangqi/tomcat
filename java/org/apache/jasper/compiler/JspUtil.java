@@ -24,7 +24,6 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
-import org.apache.jasper.Constants;
 import org.apache.jasper.JasperException;
 import org.apache.jasper.JspCompilationContext;
 import org.apache.tomcat.Jar;
@@ -249,14 +248,15 @@ public class JspUtil {
     }
 
     /**
-     * Returns the <tt>Class</tt> object associated with the class or
+     * Returns the <code>Class</code> object associated with the class or
      * interface with the given string name.
      *
      * <p>
-     * The <tt>Class</tt> object is determined by passing the given string
-     * name to the <tt>Class.forName()</tt> method, unless the given string
+     * The <code>Class</code> object is determined by passing the given string
+     * name to the <code>Class.forName()</code> method, unless the given string
      * name represents a primitive type, in which case it is converted to a
-     * <tt>Class</tt> object by appending ".class" to it (e.g., "int.class").
+     * <code>Class</code> object by appending ".class" to it (e.g.,
+     * "int.class").
      * @param type The class name, array or primitive type
      * @param loader The class loader
      * @return the loaded class
@@ -393,7 +393,7 @@ public class JspUtil {
                         + ") "
                         + "org.apache.jasper.runtime.PageContextImpl.proprietaryEvaluate"
                         + "(" + Generator.quote(expression) + ", " + targetType
-                        + ".class, " + "(javax.servlet.jsp.PageContext)" + jspCtxt + ", "
+                        + ".class, " + "(jakarta.servlet.jsp.PageContext)" + jspCtxt + ", "
                         + fnmapvar + ")");
 
         /*
@@ -671,6 +671,7 @@ public class JspUtil {
      * the given tag file path.
      *
      * @param path Tag file path
+     * @param packageName The package name
      * @param urn The tag identifier
      * @param err Error dispatcher
      *
@@ -678,7 +679,7 @@ public class JspUtil {
      *         the given tag file path
      * @throws JasperException Failed to generate a class name for the tag
      */
-    public static String getTagHandlerClassName(String path, String urn,
+    public static String getTagHandlerClassName(String path, String packageName, String urn,
             ErrorDispatcher err) throws JasperException {
 
 
@@ -703,12 +704,12 @@ public class JspUtil {
 
         index = path.indexOf(WEB_INF_TAGS);
         if (index != -1) {
-            className = Constants.TAG_FILE_PACKAGE_NAME + ".web.";
+            className = packageName + ".web.";
             begin = index + WEB_INF_TAGS.length();
         } else {
             index = path.indexOf(META_INF_TAGS);
             if (index != -1) {
-                className = getClassNameBase(urn);
+                className = getClassNameBase(packageName, urn);
                 begin = index + META_INF_TAGS.length();
             } else {
                 err.jspError("jsp.error.tagfile.illegalPath", path);
@@ -720,9 +721,9 @@ public class JspUtil {
         return className;
     }
 
-    private static String getClassNameBase(String urn) {
+    private static String getClassNameBase(String packageName, String urn) {
         StringBuilder base =
-                new StringBuilder(Constants.TAG_FILE_PACKAGE_NAME + ".meta.");
+                new StringBuilder(packageName + ".meta.");
         if (urn != null) {
             base.append(makeJavaPackage(urn));
             base.append('.');

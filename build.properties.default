@@ -23,11 +23,11 @@
 # -----------------------------------------------------------------------------
 
 # ----- Version Control Flags -----
-version.major=9
+version.major=10
 version.minor=0
-version.build=25
+version.build=0
 version.patch=0
-version.suffix=-dev
+version.suffix=-M5-dev
 
 # ----- Source control flags -----
 git.branch=master
@@ -129,15 +129,15 @@ wsdl4j-lib.loc=${base-maven.loc}/wsdl4j/wsdl4j/${wsdl4j-lib.version}/wsdl4j-${ws
 # ----- Eclipse JDT, version 4.7 or later -----#
 # See https://cwiki.apache.org/confluence/display/TOMCAT/Managing+Tomcat%27s+Dependency+on+the+Eclipse+JDT+Core+Batch+Compiler
 #
-# Checksum is from "SHA512 Checksums for 4.10" link at
-# http://download.eclipse.org/eclipse/downloads/drops4/R-4.10-201812060815/
-# http://download.eclipse.org/eclipse/downloads/drops4/R-4.10-201812060815/checksum/eclipse-4.10-SUMSSHA512
+# Checksum is from "SHA512 Checksums for 4.15" link at
+# http://download.eclipse.org/eclipse/downloads/drops4/R-4.15-202003050155/
+# http://download.eclipse.org/eclipse/downloads/drops4/R-4.15-202003050155/checksum/eclipse-4.15-SUMSSHA512
 #
-jdt.version=4.12
-jdt.release=R-4.12-201906051800/
+jdt.version=4.15
+jdt.release=R-4.15-202003050155/
 jdt.checksum.enabled=true
 jdt.checksum.algorithm=SHA-512
-jdt.checksum.value=7d38921ae374a5112e7ed5596d85955b608ddf74849373d7a74b199961514807e749d8c8cad89871fa1fdd5e14bc6ec471665546a9f8d313da5c963589c307b0
+jdt.checksum.value=41311832a593d13ea84eebea087baa3bab16df381c70bd4c0f425caeb69eac1b41be2af27e40735ae16c039df4861fa93c3cfc4c21f84bad1c5eb1cb0e7ad351
 jdt.home=${base.path}/ecj-${jdt.version}
 jdt.jar=${jdt.home}/ecj-${jdt.version}.jar
 # The download will be moved to the archive area eventually. We are taking care of that in advance.
@@ -175,20 +175,20 @@ nsis.nsdialogs.dll=${nsis.home}/Plugins/${nsis.arch.dir}nsDialogs.dll
 nsis.loc=${base-sf.loc}/nsis/nsis-${nsis.version}.zip
 
 # ----- Commons Daemon, version 1.2.0 or later -----
-commons-daemon.version=1.2.0
+commons-daemon.version=1.2.2
 
-# checksum for commons-daemon-1.2.0-bin.tar.gz
+# checksum for commons-daemon-1.2.1-bin.tar.gz
 commons-daemon.bin.checksum.enabled=true
 commons-daemon.bin.checksum.algorithm=SHA-512
-commons-daemon.bin.checksum.value=81fbbd1115d735232bbcc426d958bd8fe149c97bfe96df1549a19332afd4954f3f75c3a693f214bfef065931a1d79c528dfb2cefb1bb3628d211e1761814c23b
+commons-daemon.bin.checksum.value=f9fb917aaf398f61c42796eb4168664e076f81bc3fae82790eb39c723f03a1e7cbc2304161938d8d8993b7fbb718214b94740dbf9679f6ef93e85b5a2e861761
 
-# checksums for commons-daemon-1.1.0-native-src.tar.gz, commons-daemon-1.2.0-bin-windows.zip
+# checksums for commons-daemon-1.2.1-native-src.tar.gz, commons-daemon-1.2.1-bin-windows.zip
 commons-daemon.native.src.checksum.enabled=true
 commons-daemon.native.src.checksum.algorithm=SHA-512
-commons-daemon.native.src.checksum.value=c37f506b129b8a0efface6745dcc6d0d9d3e2663d28eca0df9903301f0b9b65fd8306e361935887fb459daf0a29da6fa63ea60f742ce4e497dc53a2a2d86db12
+commons-daemon.native.src.checksum.value=45ad856a8a6b024e80905cfac5a741a57ab86479ecd65adab9641f5444d3a2362bb13d1ea38ec3db5eb89d30c29f2f6d3b0e48cbf2f60c081c4df2451acd1ab4
 commons-daemon.native.win.checksum.enabled=true
 commons-daemon.native.win.checksum.algorithm=SHA-512
-commons-daemon.native.win.checksum.value=8b6e0bb4172861338e0cb3238f6da715c3cef04a88e8bfab0cbb487ef638aa69fd34de9407b0b2ed54451fbbcbff8a999324289052a581a5d07d6f6ff84a83b6
+commons-daemon.native.win.checksum.value=16e7a6fc5bc83ada3bcf9e10cc69ef21400dc019d1f2be00caec0bce72c3bc5a7c72116878e12b4851a15bb473c0948a9c14e1a86b6addcefa6c20638dbcc88c
 
 commons-daemon.home=${base.path}/commons-daemon-${commons-daemon.version}
 commons-daemon.jar=${commons-daemon.home}/commons-daemon-${commons-daemon.version}.jar
@@ -204,10 +204,10 @@ commons-daemon.native.win.loc.1=${base-commons.loc.1}/daemon/binaries/windows/co
 commons-daemon.native.win.loc.2=${base-commons.loc.2}/daemon/binaries/windows/commons-daemon-${commons-daemon.version}-bin-windows.zip
 
 # ----- JUnit Unit Test Suite, version 4.11 or later -----
-junit.version=4.12
+junit.version=4.13
 junit.checksum.enabled=true
 junit.checksum.algorithm=MD5|SHA-1
-junit.checksum.value=5b38c40c97fbd0adee29f91e60405584|2973d150c0dc1fefe998f834810d68f278ea58ec
+junit.checksum.value=5da6445d7b80aba2623e73d4561dcfde|e49ccba652b735c93bd6e6f59760d8254cf597dd
 junit.home=${base.path}/junit-${junit.version}
 junit.jar=${junit.home}/junit-${junit.version}.jar
 junit.loc=${base-maven.loc}/junit/junit/${junit.version}/junit-${junit.version}.jar
@@ -290,7 +290,7 @@ saaj-api.loc=${base-maven.loc}/javax/xml/soap/saaj-api/${saaj-api.version}/saaj-
 # ----- provides OSGI metadata for JARs       -----
 bnd.version=4.2.0
 
-# checksums for biz.aQute.bnd-4.0.0.jar, biz.aQute.bndlib-4.0.0.jar
+# checksums for biz.aQute.bnd-4.2.0.jar, biz.aQute.bndlib-4.2.0.jar
 bnd.checksum.enabled=true
 bnd.checksum.algorithm=MD5|SHA-1
 bnd.checksum.value=ca26a671ea67bf75d83b1588bdd68923|d4bc96b2619f95e596bbf3f725f3b077e96c5d43

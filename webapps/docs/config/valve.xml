@@ -304,14 +304,9 @@
     <li><b>%u</b> - Remote user that was authenticated (if any), else '-'</li>
     <li><b>%U</b> - Requested URL path</li>
     <li><b>%v</b> - Local server name</li>
-    <li><b>%D</b> - Time taken to process the request in millis. Note: In
-                    httpd %D is microseconds. Behaviour will be aligned to httpd
-                    in Tomcat 10 onwards.</li>
-    <li><b>%T</b> - Time taken to process the request, in seconds. Note: This
-                    value has millisecond resolution whereas in httpd it has
-                    second resolution. Behaviour will be align to httpd
-                    in Tomcat 10 onwards.</li>
-    <li><b>%F</b> - Time taken to commit the response, in millis</li>
+    <li><b>%D</b> - Time taken to process the request in microseconds</li>
+    <li><b>%T</b> - Time taken to process the request, in seconds</li>
+    <li><b>%F</b> - Time taken to commit the response, in milliseconds</li>
     <li><b>%I</b> - Current request thread name (can compare later with stacktraces)</li>
     <li><b>%X</b> - Connection status when response is completed:
       <ul>
@@ -340,6 +335,10 @@
         remote (client) port (<code>xxx=remote</code>)</li>
     <li><b><code>%{xxx}t</code></b> write timestamp at the end of the request formatted using the
         enhanced SimpleDateFormat pattern <code>xxx</code></li>
+    <li><b><code>%{xxx}T</code></b> write time taken to process the request using unit <code>xxx</code>
+        where valid units are <code>ms</code> for milliseconds, <code>us</code> for microseconds,
+        and <code>s</code> for seconds. <code>%{s}T</code> is equivalent to <code>%T</code> as well
+        as <code>%{us}T</code> is equivalent to <code>%D</code>.</li>
     </ul>
 
     <p>All formats supported by SimpleDateFormat are allowed in <code>%{xxx}t</code>.
@@ -1167,6 +1166,11 @@
         <p>Sets the host domain to be used for sso cookies.</p>
       </attribute>
 
+      <attribute name="cookieName" required="false">
+        <p>Sets the cookie name to be used for sso cookies. The default value
+        is <code>JSESSIONIDSSO</code></p>
+      </attribute>
+
     </attributes>
 
   </subsection>
@@ -1200,6 +1204,21 @@
     configuration attributes:</p>
 
     <attributes>
+
+      <attribute name="allowCorsPreflight" required="false">
+        <p>Are requests that appear to be CORS preflight requests allowed to
+        bypass the authenticator as required by the CORS specification. The
+        allowed values are <code>never</code>, <code>filter</code> and
+        <code>always</code>. <code>never</code> means that a request will never
+        bypass authentication even if it appears to be a CORS preflight request.
+        <code>filter</code> means that a request will bypass authentication if
+        it appears to be a CORS preflight request; it is mapped to a web
+        application that has the <a href="filter.html#CORS_Filter">CORS
+        Filter</a> enabled; and the CORS Filter is mapped to <code>/*</code>.
+        <code>always</code> means that all requests that appear to be CORS
+        preflight requests will bypass authentication. If not set, the default
+        value is <code>never</code>.</p>
+      </attribute>
 
       <attribute name="alwaysUseSession" required="false">
         <p>Should a session always be used once a user is authenticated? This
@@ -1343,6 +1362,21 @@
     configuration attributes:</p>
 
     <attributes>
+
+      <attribute name="allowCorsPreflight" required="false">
+        <p>Are requests that appear to be CORS preflight requests allowed to
+        bypass the authenticator as required by the CORS specification. The
+        allowed values are <code>never</code>, <code>filter</code> and
+        <code>always</code>. <code>never</code> means that a request will never
+        bypass authentication even if it appears to be a CORS preflight request.
+        <code>filter</code> means that a request will bypass authentication if
+        it appears to be a CORS preflight request; it is mapped to a web
+        application that has the <a href="filter.html#CORS_Filter">CORS
+        Filter</a> enabled; and the CORS Filter is mapped to <code>/*</code>.
+        <code>always</code> means that all requests that appear to be CORS
+        preflight requests will bypass authentication. If not set, the default
+        value is <code>never</code>.</p>
+      </attribute>
 
       <attribute name="alwaysUseSession" required="false">
         <p>Should a session always be used once a user is authenticated? This
@@ -1511,6 +1545,21 @@
 
     <attributes>
 
+      <attribute name="allowCorsPreflight" required="false">
+        <p>Are requests that appear to be CORS preflight requests allowed to
+        bypass the authenticator as required by the CORS specification. The
+        allowed values are <code>never</code>, <code>filter</code> and
+        <code>always</code>. <code>never</code> means that a request will never
+        bypass authentication even if it appears to be a CORS preflight request.
+        <code>filter</code> means that a request will bypass authentication if
+        it appears to be a CORS preflight request; it is mapped to a web
+        application that has the <a href="filter.html#CORS_Filter">CORS
+        Filter</a> enabled; and the CORS Filter is mapped to <code>/*</code>.
+        <code>always</code> means that all requests that appear to be CORS
+        preflight requests will bypass authentication. If not set, the default
+        value is <code>never</code>.</p>
+      </attribute>
+
       <attribute name="changeSessionIdOnAuthentication" required="false">
         <p>Controls if the session ID is changed if a session exists at the
         point where users are authenticated. This is to prevent session fixation
@@ -1637,6 +1686,21 @@
 
     <attributes>
 
+      <attribute name="allowCorsPreflight" required="false">
+        <p>Are requests that appear to be CORS preflight requests allowed to
+        bypass the authenticator as required by the CORS specification. The
+        allowed values are <code>never</code>, <code>filter</code> and
+        <code>always</code>. <code>never</code> means that a request will never
+        bypass authentication even if it appears to be a CORS preflight request.
+        <code>filter</code> means that a request will bypass authentication if
+        it appears to be a CORS preflight request; it is mapped to a web
+        application that has the <a href="filter.html#CORS_Filter">CORS
+        Filter</a> enabled; and the CORS Filter is mapped to <code>/*</code>.
+        <code>always</code> means that all requests that appear to be CORS
+        preflight requests will bypass authentication. If not set, the default
+        value is <code>never</code>.</p>
+      </attribute>
+
       <attribute name="cache" required="false">
         <p>Should we cache authenticated Principals if the request is part of an
         HTTP session? If not specified, the default value of <code>true</code>
@@ -1737,15 +1801,19 @@
 
     <attributes>
 
-      <attribute name="applyJava8u40Fix" required="false">
-        <p>A fix introduced in Java 8 update 40 (
-        <a href="https://bugs.openjdk.java.net/browse/JDK-8048194">JDK-8048194</a>)
-        onwards broke SPNEGO authentication for IE with Tomcat running on
-        Windows 2008 R2 servers. This option enables a work-around that allows
-        SPNEGO authentication to continue working. The work-around should not
-        impact other configurations so it is enabled by default. If necessary,
-        the workaround can be disabled by setting this attribute to
-        <code>false</code>.</p>
+      <attribute name="allowCorsPreflight" required="false">
+        <p>Are requests that appear to be CORS preflight requests allowed to
+        bypass the authenticator as required by the CORS specification. The
+        allowed values are <code>never</code>, <code>filter</code> and
+        <code>always</code>. <code>never</code> means that a request will never
+        bypass authentication even if it appears to be a CORS preflight request.
+        <code>filter</code> means that a request will bypass authentication if
+        it appears to be a CORS preflight request and the web application the
+        request maps to has the <a href="filter.html#CORS_Filter">CORS
+        Filter</a> enabled and mapped to <code>/*</code>. <code>always</code>
+        means that all requests that appear to be CORS preflight requests will
+        bypass authentication. If not set, the default value is
+        <code>never</code>.</p>
       </attribute>
 
       <attribute name="alwaysUseSession" required="false">
@@ -1758,6 +1826,17 @@
         session. For an alternative solution see
         <code>noKeepAliveUserAgents</code>. If not set, the default value of
         <code>false</code> will be used.</p>
+      </attribute>
+
+      <attribute name="applyJava8u40Fix" required="false">
+        <p>A fix introduced in Java 8 update 40 (
+        <a href="https://bugs.openjdk.java.net/browse/JDK-8048194">JDK-8048194</a>)
+        onwards broke SPNEGO authentication for IE with Tomcat running on
+        Windows 2008 R2 servers. This option enables a work-around that allows
+        SPNEGO authentication to continue working. The work-around should not
+        impact other configurations so it is enabled by default. If necessary,
+        the workaround can be disabled by setting this attribute to
+        <code>false</code>.</p>
       </attribute>
 
       <attribute name="cache" required="false">
@@ -1900,8 +1979,7 @@
     status codes and/or exception types.</p>
 
     <p><strong>NOTE:</strong> Disabling both showServerInfo and showReport will
-    only return the HTTP status code and remove all CSS from the default
-    response.</p>
+    only return the HTTP status code.</p>
 
   </subsection>
 
@@ -1922,7 +2000,7 @@
         <p>The location of the UTF-8 encoded HTML file to return for the HTTP
         error code represented by <code>nnn</code>. For example,
         <code>errorCode.404</code> specifies the file to return for an HTTP 404
-        error. The location may be relative or absolule. If relative, it must be
+        error. The location may be relative or absolute. If relative, it must be
         relative to <code>$CATALINA_BASE</code>. The special value of
         <code>errorCode.0</code> may be used to define a default error page to
         be used if no error page is defined for a status code. If no matching
@@ -1932,7 +2010,7 @@
 
       <attribute name="exceptionType.fullyQualifiedClassName" required="false">
         <p>The location of the UTF-8 encoded HTML file to return if an error has
-        occurred and the <code>javax.servlet.error.exception</code> request
+        occurred and the <code>jakarta.servlet.error.exception</code> request
         attribute has been set to an instance of
         <code>fullyQualifiedClassName</code> or a sub-class of it. For example,
         <code>errorCode.java.io.IOException</code> specifies the file to return

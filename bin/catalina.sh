@@ -94,9 +94,9 @@
 #                   of the catalina startup java process, when start (fork) is
 #                   used
 #
-#   LOGGING_CONFIG  (Optional) Override Tomcat's logging config file
+#   CATALINA_LOGGING_CONFIG (Optional) Override Tomcat's logging config file
 #                   Example (all one line)
-#                   LOGGING_CONFIG="-Djava.util.logging.config.file=$CATALINA_BASE/conf/logging.properties"
+#                   CATALINA_LOGGING_CONFIG="-Djava.util.logging.config.file=$CATALINA_BASE/conf/logging.properties"
 #
 #   LOGGING_MANAGER (Optional) Override Tomcat's logging manager
 #                   Example (all one line)
@@ -256,12 +256,12 @@ JAVA_OPTS="$JAVA_OPTS $JSSE_OPTS"
 JAVA_OPTS="$JAVA_OPTS -Djava.protocol.handler.pkgs=org.apache.catalina.webresources"
 
 # Set juli LogManager config file if it is present and an override has not been issued
-if [ -z "$LOGGING_CONFIG" ]; then
+if [ -z "$CATALINA_LOGGING_CONFIG" ]; then
   if [ -r "$CATALINA_BASE"/conf/logging.properties ]; then
-    LOGGING_CONFIG="-Djava.util.logging.config.file=$CATALINA_BASE/conf/logging.properties"
+    CATALINA_LOGGING_CONFIG="-Djava.util.logging.config.file=$CATALINA_BASE/conf/logging.properties"
   else
     # Bugzilla 45585
-    LOGGING_CONFIG="-Dnop"
+    CATALINA_LOGGING_CONFIG="-Dnop"
   fi
 fi
 
@@ -343,6 +343,10 @@ if [ "$1" = "jpda" ] ; then
   shift
 fi
 
+# TODO: Bugzilla 63815
+# This doesn't currently work (and can't be made to work) if values used in
+# CATALINA_OPTS and/or JAVA_OPTS require quoting. See:
+# https://bugs.openjdk.java.net/browse/JDK-8234808
 if [ "$1" = "debug" ] ; then
   if $os400; then
     echo "Debug command not available on OS400"
@@ -354,7 +358,7 @@ if [ "$1" = "debug" ] ; then
         echo "Using Security Manager"
       fi
       shift
-      exec "$_RUNJDB" "$LOGGING_CONFIG" $LOGGING_MANAGER $JAVA_OPTS $CATALINA_OPTS \
+      exec "$_RUNJDB" "$CATALINA_LOGGING_CONFIG" $LOGGING_MANAGER $JAVA_OPTS $CATALINA_OPTS \
         -D$ENDORSED_PROP="$JAVA_ENDORSED_DIRS" \
         -classpath "$CLASSPATH" \
         -sourcepath "$CATALINA_HOME"/../../java \
@@ -365,7 +369,7 @@ if [ "$1" = "debug" ] ; then
         -Djava.io.tmpdir="$CATALINA_TMPDIR" \
         org.apache.catalina.startup.Bootstrap "$@" start
     else
-      exec "$_RUNJDB" "$LOGGING_CONFIG" $LOGGING_MANAGER $JAVA_OPTS $CATALINA_OPTS \
+      exec "$_RUNJDB" "$CATALINA_LOGGING_CONFIG" $LOGGING_MANAGER $JAVA_OPTS $CATALINA_OPTS \
         -D$ENDORSED_PROP="$JAVA_ENDORSED_DIRS" \
         -classpath "$CLASSPATH" \
         -sourcepath "$CATALINA_HOME"/../../java \
@@ -384,7 +388,7 @@ elif [ "$1" = "run" ]; then
       echo "Using Security Manager"
     fi
     shift
-    eval exec "\"$_RUNJAVA\"" "\"$LOGGING_CONFIG\"" $LOGGING_MANAGER $JAVA_OPTS $CATALINA_OPTS \
+    eval exec "\"$_RUNJAVA\"" "\"$CATALINA_LOGGING_CONFIG\"" $LOGGING_MANAGER "$JAVA_OPTS" "$CATALINA_OPTS" \
       -D$ENDORSED_PROP="\"$JAVA_ENDORSED_DIRS\"" \
       -classpath "\"$CLASSPATH\"" \
       -Djava.security.manager \
@@ -394,7 +398,7 @@ elif [ "$1" = "run" ]; then
       -Djava.io.tmpdir="\"$CATALINA_TMPDIR\"" \
       org.apache.catalina.startup.Bootstrap "$@" start
   else
-    eval exec "\"$_RUNJAVA\"" "\"$LOGGING_CONFIG\"" $LOGGING_MANAGER $JAVA_OPTS $CATALINA_OPTS \
+    eval exec "\"$_RUNJAVA\"" "\"$CATALINA_LOGGING_CONFIG\"" $LOGGING_MANAGER "$JAVA_OPTS" "$CATALINA_OPTS" \
       -D$ENDORSED_PROP="\"$JAVA_ENDORSED_DIRS\"" \
       -classpath "\"$CLASSPATH\"" \
       -Dcatalina.base="\"$CATALINA_BASE\"" \
@@ -452,7 +456,7 @@ elif [ "$1" = "start" ] ; then
       echo "Using Security Manager"
     fi
     shift
-    eval $_NOHUP "\"$_RUNJAVA\"" "\"$LOGGING_CONFIG\"" $LOGGING_MANAGER $JAVA_OPTS $CATALINA_OPTS \
+    eval $_NOHUP "\"$_RUNJAVA\"" "\"$CATALINA_LOGGING_CONFIG\"" $LOGGING_MANAGER "$JAVA_OPTS" "$CATALINA_OPTS" \
       -D$ENDORSED_PROP="\"$JAVA_ENDORSED_DIRS\"" \
       -classpath "\"$CLASSPATH\"" \
       -Djava.security.manager \
@@ -464,7 +468,7 @@ elif [ "$1" = "start" ] ; then
       >> "$CATALINA_OUT" 2>&1 "&"
 
   else
-    eval $_NOHUP "\"$_RUNJAVA\"" "\"$LOGGING_CONFIG\"" $LOGGING_MANAGER $JAVA_OPTS $CATALINA_OPTS \
+    eval $_NOHUP "\"$_RUNJAVA\"" "\"$CATALINA_LOGGING_CONFIG\"" $LOGGING_MANAGER "$JAVA_OPTS" "$CATALINA_OPTS" \
       -D$ENDORSED_PROP="\"$JAVA_ENDORSED_DIRS\"" \
       -classpath "\"$CLASSPATH\"" \
       -Dcatalina.base="\"$CATALINA_BASE\"" \
@@ -517,7 +521,7 @@ elif [ "$1" = "stop" ] ; then
     fi
   fi
 
-  eval "\"$_RUNJAVA\"" $LOGGING_MANAGER $JAVA_OPTS \
+  eval "\"$_RUNJAVA\"" $LOGGING_MANAGER "$JAVA_OPTS" \
     -D$ENDORSED_PROP="\"$JAVA_ENDORSED_DIRS\"" \
     -classpath "\"$CLASSPATH\"" \
     -Dcatalina.base="\"$CATALINA_BASE\"" \
@@ -604,7 +608,7 @@ elif [ "$1" = "stop" ] ; then
 
 elif [ "$1" = "configtest" ] ; then
 
-    eval "\"$_RUNJAVA\"" $LOGGING_MANAGER $JAVA_OPTS \
+    eval "\"$_RUNJAVA\"" $LOGGING_MANAGER "$JAVA_OPTS" \
       -D$ENDORSED_PROP="\"$JAVA_ENDORSED_DIRS\"" \
       -classpath "\"$CLASSPATH\"" \
       -Dcatalina.base="\"$CATALINA_BASE\"" \

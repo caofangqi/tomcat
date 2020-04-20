@@ -22,8 +22,9 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
-import javax.servlet.RequestDispatcher;
+import jakarta.servlet.RequestDispatcher;
 
 import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.buf.ByteChunk;
@@ -90,6 +91,7 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
         userDataHelper = new UserDataHelper(getLog());
     }
 
+
     /**
      * Update the current error state to the new error state if the new error
      * state is more severe than the current error state.
@@ -97,7 +99,9 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
      * @param t The error which occurred
      */
     protected void setErrorState(ErrorState errorState, Throwable t) {
-        response.setError();
+        // Use the return value to avoid processing more than one async error
+        // in a single async cycle.
+        boolean setError = response.setError();
         boolean blockIo = this.errorState.isIoAllowed() && !errorState.isIoAllowed();
         this.errorState = this.errorState.getMostSevere(errorState);
         // Don't change the status code for IOException since that is almost
@@ -109,17 +113,10 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
         if (t != null) {
             request.setAttribute(RequestDispatcher.ERROR_EXCEPTION, t);
         }
-        if (blockIo && !ContainerThreadMarker.isContainerThread() && isAsync()) {
-            // The error occurred on a non-container thread during async
-            // processing which means not all of the necessary clean-up will
-            // have been completed. Dispatch to a container thread to do the
-            // clean-up. Need to do it this way to ensure that all the necessary
-            // clean-up is performed.
-            asyncStateMachine.asyncMustError();
-            if (getLog().isDebugEnabled()) {
-                getLog().debug(sm.getString("abstractProcessor.nonContainerThreadError"), t);
+        if (blockIo && isAsync() && setError) {
+            if (asyncStateMachine.asyncError()) {
+                processSocketEvent(SocketEvent.ERROR, true);
             }
-            processSocketEvent(SocketEvent.ERROR, true);
         }
     }
 
@@ -251,15 +248,25 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
 
         rp.setStage(org.apache.coyote.Constants.STAGE_ENDED);
 
+        SocketState state;
+
         if (getErrorState().isError()) {
             request.updateCounters();
-            return SocketState.CLOSED;
+            state = SocketState.CLOSED;
         } else if (isAsync()) {
-            return SocketState.LONG;
+            state = SocketState.LONG;
         } else {
             request.updateCounters();
-            return dispatchEndRequest();
+            state = dispatchEndRequest();
         }
+
+        if (getLog().isDebugEnabled()) {
+            getLog().debug("Socket: [" + socketWrapper +
+                    "], Status in: [" + status +
+                    "], State out: [" + state + "]");
+        }
+
+        return state;
     }
 
 
@@ -368,7 +375,7 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
                     // Validate and write response headers
                     prepareResponse();
                 } catch (IOException e) {
-                    setErrorState(ErrorState.CLOSE_CONNECTION_NOW, e);
+                    handleIOException(e);
                 }
             }
             break;
@@ -377,10 +384,8 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
             action(ActionCode.COMMIT, null);
             try {
                 finishResponse();
-            } catch (CloseNowException cne) {
-                setErrorState(ErrorState.CLOSE_NOW, cne);
             } catch (IOException e) {
-                setErrorState(ErrorState.CLOSE_CONNECTION_NOW, e);
+                handleIOException(e);
             }
             break;
         }
@@ -393,7 +398,7 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
             try {
                 flush();
             } catch (IOException e) {
-                setErrorState(ErrorState.CLOSE_CONNECTION_NOW, e);
+                handleIOException(e);
                 response.setErrorException(e);
             }
             break;
@@ -615,6 +620,31 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
             result.set(isTrailerFieldsSupported());
             break;
         }
+
+        // Identifiers associated with multiplexing protocols like HTTP/2
+        case CONNECTION_ID: {
+            @SuppressWarnings("unchecked")
+            AtomicReference<Object> result = (AtomicReference<Object>) param;
+            result.set(getConnectionID());
+            break;
+        }
+        case STREAM_ID: {
+            @SuppressWarnings("unchecked")
+            AtomicReference<Object> result = (AtomicReference<Object>) param;
+            result.set(getStreamID());
+            break;
+        }
+        }
+    }
+
+
+    private void handleIOException (IOException ioe) {
+        if (ioe instanceof CloseNowException) {
+            // Close the channel but keep the connection open
+            setErrorState(ErrorState.CLOSE_NOW, ioe);
+        } else {
+            // Close the connection and all channels within that connection
+            setErrorState(ErrorState.CLOSE_CONNECTION_NOW, ioe);
         }
     }
 
@@ -940,6 +970,30 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
 
 
     /**
+     * Protocols that support multiplexing (e.g. HTTP/2) should override this
+     * method and return the appropriate ID.
+     *
+     * @return The stream ID associated with this request or {@code null} if a
+     *         multiplexing protocol is not being used
+      */
+    protected Object getConnectionID() {
+        return null;
+    }
+
+
+    /**
+     * Protocols that support multiplexing (e.g. HTTP/2) should override this
+     * method and return the appropriate ID.
+     *
+     * @return The stream ID associated with this request or {@code null} if a
+     *         multiplexing protocol is not being used
+     */
+    protected Object getStreamID() {
+        return null;
+    }
+
+
+    /**
      * Flush any pending writes. Used during non-blocking writes to flush any
      * remaining data from a previous incomplete write.
      *
@@ -971,7 +1025,7 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
         // information (e.g. client IP)
         setSocketWrapper(socketWrapper);
         // Setup the minimal request information
-        request.setStartTime(System.currentTimeMillis());
+        request.setStartTimeNanos(System.nanoTime());
         // Setup the minimal response information
         response.setStatus(400);
         response.setError();

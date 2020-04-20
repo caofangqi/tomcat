@@ -88,7 +88,6 @@ public class DelegatingConnection<C extends Connection> extends AbandonedTrace i
     /**
      * Returns a string representation of the metadata associated with the innermost delegate connection.
      */
-    @SuppressWarnings("resource")
     @Override
     public synchronized String toString() {
         String str = null;
@@ -139,7 +138,6 @@ public class DelegatingConnection<C extends Connection> extends AbandonedTrace i
      *            connection to compare innermost delegate with
      * @return true if innermost delegate equals <code>c</code>
      */
-    @SuppressWarnings("resource")
     public boolean innermostDelegateEquals(final Connection c) {
         final Connection innerCon = getInnermostDelegateInternal();
         if (innerCon == null) {
@@ -172,7 +170,6 @@ public class DelegatingConnection<C extends Connection> extends AbandonedTrace i
      *
      * @return innermost delegate.
      */
-    @SuppressWarnings("resource")
     public final Connection getInnermostDelegateInternal() {
         Connection conn = connection;
         while (conn != null && conn instanceof DelegatingConnection) {
@@ -621,7 +618,7 @@ public class DelegatingConnection<C extends Connection> extends AbandonedTrace i
         // Statement's when it is closed.
         // DBCP-288. Not all the traced objects will be statements
         final List<AbandonedTrace> traces = getTrace();
-        if (traces != null && traces.isEmpty()) {
+        if (traces != null && !traces.isEmpty()) {
             final List<Exception> thrownList = new ArrayList<>();
             final Iterator<AbandonedTrace> traceIter = traces.iterator();
             while (traceIter.hasNext()) {

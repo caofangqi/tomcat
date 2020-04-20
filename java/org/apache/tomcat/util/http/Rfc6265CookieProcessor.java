@@ -22,6 +22,8 @@ import java.text.FieldPosition;
 import java.util.BitSet;
 import java.util.Date;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.buf.ByteChunk;
@@ -98,7 +100,13 @@ public class Rfc6265CookieProcessor extends CookieProcessorBase {
 
 
     @Override
-    public String generateHeader(javax.servlet.http.Cookie cookie) {
+    public String generateHeader(jakarta.servlet.http.Cookie cookie) {
+        return generateHeader(cookie, null);
+    }
+
+
+    @Override
+    public String generateHeader(jakarta.servlet.http.Cookie cookie, HttpServletRequest request) {
 
         // Can't use StringBuilder due to DateFormat
         StringBuffer header = new StringBuffer();
@@ -164,7 +172,7 @@ public class Rfc6265CookieProcessor extends CookieProcessorBase {
 
         SameSiteCookies sameSiteCookiesValue = getSameSiteCookies();
 
-        if (!sameSiteCookiesValue.equals(SameSiteCookies.NONE)) {
+        if (!sameSiteCookiesValue.equals(SameSiteCookies.UNSET)) {
             header.append("; SameSite=");
             header.append(sameSiteCookiesValue.getValue());
         }

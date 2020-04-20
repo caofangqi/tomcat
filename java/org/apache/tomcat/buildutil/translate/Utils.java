@@ -78,7 +78,11 @@ public class Utils {
 
 
     static void processDirectory(File root, File dir, Map<String,Properties> translations) throws IOException {
-        for (File f : dir.listFiles()) {
+        File[] files = dir.listFiles();
+        if (files == null) {
+            throw new IllegalArgumentException("Not a directory [" + dir.getAbsolutePath() + "]");
+        }
+        for (File f : files) {
             if (f.isDirectory()) {
                 processDirectory(root, f, translations);
             } else if (f.isFile()) {
@@ -125,6 +129,9 @@ public class Utils {
         prefix = prefix.substring(root.getCanonicalPath().length() + 1);
         prefix = prefix.replace(File.separatorChar, '.');
         prefix = prefix + Constants.END_PACKAGE_MARKER;
+        // POEditor uses javax package names.
+        // Renaming here is less work than renaming terms in POEditor
+        prefix = prefix.replace(Constants.JAKARTA_EE_SUBSTRING, Constants.JAVA_EE_SUBSTRING);
         return prefix;
     }
 
