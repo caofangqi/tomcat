@@ -1020,8 +1020,7 @@ class Http2UpgradeHandler extends AbstractStream implements InternalHttpUpgradeH
 
         // Recipients are children of the current stream that are in the
         // backlog.
-        Set<AbstractStream> recipients = new HashSet<>();
-        recipients.addAll(stream.getChildStreams());
+        Set<AbstractStream> recipients = new HashSet<>(stream.getChildStreams());
         recipients.retainAll(backLogStreams.keySet());
 
         // Loop until we run out of allocation or recipients
@@ -1474,11 +1473,11 @@ class Http2UpgradeHandler extends AbstractStream implements InternalHttpUpgradeH
     }
 
 
-    private void closeIdleStreams(int newMaxActiveRemoteStreamId) throws Http2Exception {
-        for (int i = maxActiveRemoteStreamId + 2; i < newMaxActiveRemoteStreamId; i += 2) {
-            Stream stream = getStream(i, false);
-            if (stream != null) {
-                stream.closeIfIdle();
+    private void closeIdleStreams(int newMaxActiveRemoteStreamId) {
+        for (Entry<Integer,Stream> entry : streams.entrySet()) {
+            if (entry.getKey().intValue() > maxActiveRemoteStreamId &&
+                    entry.getKey().intValue() < newMaxActiveRemoteStreamId) {
+                entry.getValue().closeIfIdle();
             }
         }
         maxActiveRemoteStreamId = newMaxActiveRemoteStreamId;

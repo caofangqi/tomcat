@@ -1022,7 +1022,7 @@ final class CallMethodMultiRule extends CallMethodRule {
             sb.append(targetOffset);
             sb.append(",stackdepth=");
             sb.append(digester.getCount());
-            sb.append(")");
+            sb.append(')');
             throw new org.xml.sax.SAXException(sb.toString());
         }
 
@@ -1033,12 +1033,11 @@ final class CallMethodMultiRule extends CallMethodRule {
             return;
         }
 
-        for (int j = 0; j < multiParams.size(); j++) {
-            Object param = multiParams.get(j);
-            if(param == null || (param instanceof String
+        for (Object param : multiParams) {
+            if (param == null || (param instanceof String
                     && !String.class.isAssignableFrom(paramTypes[multiParamIndex]))) {
                 paramValues[multiParamIndex] =
-                    IntrospectionUtils.convert((String) param, paramTypes[multiParamIndex]);
+                        IntrospectionUtils.convert((String) param, paramTypes[multiParamIndex]);
             } else {
                 paramValues[multiParamIndex] = param;
             }

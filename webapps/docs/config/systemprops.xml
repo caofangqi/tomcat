@@ -45,7 +45,7 @@
          <code>org.apache.tomcat.util.IntrospectionUtils.PropertySource</code>.
          Required to have a public constructor with no arguments.</p>
       <p>Use this to add a property source, that will be invoked when
-         <code>${parameter:default-value}</code> denoted parameters (with
+         <code>${parameter:-default-value}</code> denoted parameters (with
          optional default values) are found in the XML files that Tomcat
          parses.</p>
       <p>Property replacement from the specified property source on the JVM
@@ -405,6 +405,12 @@
       <p>The NestedCredentialHandler allows nested CredentialHandlers. This
       property controls the maximum permitted number of levels of nesting.</p>
       <p>If not specified, the default value of <code>3</code> will be used.</p>
+    </property>
+
+    <property name="org.apache.catalina.tribes.io. BufferPool.DEFAULT_POOL_SIZE">
+      <p>The size of the buffer pool which is used by Tribes in bytes.</p>
+      <p>If not specified, the default value of <code>100*1024*1024</code>
+      (100MB) will be used.</p>
     </property>
 
   </properties>

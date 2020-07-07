@@ -979,10 +979,8 @@ public final class CGIServlet extends HttpServlet {
              * (apologies to Marv Albert regarding MJ)
              */
 
-            Hashtable<String,String> envp = new Hashtable<>();
-
             // Add the shell environment variables (if any)
-            envp.putAll(shellEnv);
+            Hashtable<String, String> envp = new Hashtable<>(shellEnv);
 
             // Add the CGI environment variables
             String sPathInfoOrig = null;
@@ -1163,12 +1161,12 @@ public final class CGIServlet extends HttpServlet {
                         new StringTokenizer (pathInfo, "/");
                 // start with first element
                 while (pathWalker.hasMoreElements() && (is == null)) {
-                    srcPath.append("/");
+                    srcPath.append('/');
                     srcPath.append(pathWalker.nextElement());
                     is = context.getResourceAsStream(srcPath.toString());
                 }
                 destPath.append(tmpDir);
-                destPath.append("/");
+                destPath.append('/');
                 destPath.append(srcPath);
             }
 
@@ -1254,13 +1252,13 @@ public final class CGIServlet extends HttpServlet {
                     sb.append(entry.getKey());
                     sb.append(": [");
                     sb.append(blanksToString(entry.getValue(), "will be set to blank"));
-                    sb.append("]");
+                    sb.append(']');
                     sb.append(System.lineSeparator());
                 }
 
                 sb.append("Derived Command :[");
                 sb.append(nullsToBlanks(command));
-                sb.append("]");
+                sb.append(']');
                 sb.append(System.lineSeparator());
 
 
@@ -1268,7 +1266,7 @@ public final class CGIServlet extends HttpServlet {
                 if (workingDirectory != null) {
                     sb.append(workingDirectory.toString());
                 }
-                sb.append("]");
+                sb.append(']');
                 sb.append(System.lineSeparator());
 
                 sb.append("Command Line Params:");
@@ -1276,7 +1274,7 @@ public final class CGIServlet extends HttpServlet {
                 for (String param : cmdLineParameters) {
                     sb.append("  [");
                     sb.append(param);
-                    sb.append("]");
+                    sb.append(']');
                     sb.append(System.lineSeparator());
                 }
             } else {
@@ -1646,7 +1644,7 @@ public final class CGIServlet extends HttpServlet {
             try {
                 rt = Runtime.getRuntime();
                 proc = rt.exec(
-                        cmdAndArgs.toArray(new String[cmdAndArgs.size()]),
+                        cmdAndArgs.toArray(new String[0]),
                         hashToStringArray(env), wd);
 
                 String sContentLength = env.get("CONTENT_LENGTH");

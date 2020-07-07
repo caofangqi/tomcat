@@ -149,7 +149,8 @@ public class Connector extends LifecycleMBeanBase  {
      */
     protected boolean enforceEncodingInGetWriter = true;
 
-    /*
+
+    /**
      * Is generation of X-Powered-By response header enabled/disabled?
      */
     protected boolean xpoweredBy = false;
@@ -278,9 +279,15 @@ public class Connector extends LifecycleMBeanBase  {
     protected Adapter adapter = null;
 
 
+    /**
+     * The URI encoding in use.
+     */
     private Charset uriCharset = StandardCharsets.UTF_8;
 
 
+    /**
+     * The behavior when an encoded solidus (slash) is submitted.
+     */
     private EncodedSolidusHandling encodedSolidusHandling = EncodedSolidusHandling.REJECT;
 
 
@@ -318,28 +325,6 @@ public class Connector extends LifecycleMBeanBase  {
             return false;
         }
         return IntrospectionUtils.setProperty(protocolHandler, name, value);
-    }
-
-
-    /**
-     * Return a property from the protocol handler.
-     *
-     * @param name the property name
-     * @return the property value
-     */
-    public Object getAttribute(String name) {
-        return getProperty(name);
-    }
-
-
-    /**
-     * Set a property on the protocol handler.
-     *
-     * @param name the property name
-     * @param value the property value
-     */
-    public void setAttribute(String name, Object value) {
-        setProperty(name, String.valueOf(value));
     }
 
 

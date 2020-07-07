@@ -12,15 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+-include: build-defaults.bnd
+
 Automatic-Module-Name: org.apache.tomcat.embed.jasper
 Bundle-Name: tomcat-embed-jasper
 Bundle-SymbolicName: org.apache.tomcat-embed-jasper
-Bundle-Version: @VERSION@
 Export-Package: \
-    jakarta.servlet.jsp,\
-    jakarta.servlet.jsp.el,\
-    jakarta.servlet.jsp.resources,\
-    jakarta.servlet.jsp.tagext,\
+    jakarta.servlet.jsp.*;version=${jsp.spec.version},\
     org.apache.jasper,\
     org.apache.jasper.compiler,\
     org.apache.jasper.compiler.tagplugin,\
@@ -31,3 +30,22 @@ Export-Package: \
     org.apache.jasper.tagplugins.jstl,\
     org.apache.jasper.tagplugins.jstl.core,\
     org.apache.jasper.util
+
+-includepackage: \
+    org.apache.jasper.resources
+
+-includeresource.meta-inf: /META-INF/=../META-INF/jasper.jar/
+
+Provide-Capability: \
+    osgi.contract;\
+        osgi.contract=JavaJSP;\
+        version:Version=${jsp.spec.version};\
+        uses:='${packages;NAMED;jakarta.servlet.jsp.*}'
+
+-namesection: jakarta/servlet/jsp*/;\
+    Specification-Title=Jakarta Server Pages;\
+    Specification-Version=${jsp.spec.version};\
+    Specification-Vendor=Eclipse Foundation;\
+    Implementation-Title=jakarta.servlet.jsp;\
+    Implementation-Version=${jsp.spec.version}.${jsp.revision};\
+    Implementation-Vendor=Apache Software Foundation

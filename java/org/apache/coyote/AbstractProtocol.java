@@ -853,8 +853,10 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                             // Assume direct HTTP/2 connection
                             UpgradeProtocol upgradeProtocol = getProtocol().getUpgradeProtocol("h2c");
                             if (upgradeProtocol != null) {
-                                processor = upgradeProtocol.getProcessor(
-                                        wrapper, getProtocol().getAdapter());
+                                // Release the Http11 processor to be re-used
+                                release(processor);
+                                // Create the upgrade processor
+                                processor = upgradeProtocol.getProcessor(wrapper, getProtocol().getAdapter());
                                 wrapper.unRead(leftOverInput);
                                 // Associate with the processor with the connection
                                 wrapper.setCurrentProcessor(processor);
@@ -864,7 +866,8 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                                         "abstractConnectionHandler.negotiatedProcessor.fail",
                                         "h2c"));
                                 }
-                                return SocketState.CLOSED;
+                                // Exit loop and trigger appropriate clean-up
+                                state = SocketState.CLOSED;
                             }
                         } else {
                             HttpUpgradeHandler httpUpgradeHandler = upgradeToken.getHttpUpgradeHandler();
@@ -877,8 +880,6 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                                         processor, wrapper));
                             }
                             wrapper.unRead(leftOverInput);
-                            // Mark the connection as upgraded
-                            wrapper.setUpgraded(true);
                             // Associate with the processor with the connection
                             wrapper.setCurrentProcessor(processor);
                             // Initialise the upgrade handler (which may trigger

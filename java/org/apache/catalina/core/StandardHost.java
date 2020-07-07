@@ -664,8 +664,8 @@ public class StandardHost extends ContainerBase implements Host {
 
         synchronized (aliasesLock) {
             // Skip duplicate aliases
-            for (int i = 0; i < aliases.length; i++) {
-                if (aliases[i].equals(alias))
+            for (String s : aliases) {
+                if (s.equals(alias))
                     return;
             }
             // Add this alias to the list
@@ -749,7 +749,7 @@ public class StandardHost extends ContainerBase implements Host {
             }
         }
 
-        return result.toArray(new String[result.size()]);
+        return result.toArray(new String[0]);
     }
 
     /**

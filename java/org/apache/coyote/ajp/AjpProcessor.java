@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -586,8 +585,7 @@ public class AjpProcessor extends AbstractProcessor {
         else if (messageLength == 0) {
             // Zero length message.
             return true;
-        }
-        else {
+        } else {
             if (messageLength > message.getBuffer().length) {
                 // Message too long for the buffer
                 // Need to trigger a 400 response
@@ -780,17 +778,12 @@ public class AjpProcessor extends AbstractProcessor {
                     // All 'known' attributes will be processed by the previous
                     // blocks. Any remaining attribute is an 'arbitrary' one.
                     Pattern pattern = protocol.getAllowedRequestAttributesPatternInternal();
-                    if (pattern == null) {
+                    if (pattern != null && pattern.matcher(n).matches()) {
+                        request.setAttribute(n, v);
+                    } else {
+                        log.warn(sm.getString("ajpprocessor.unknownAttribute", n));
                         response.setStatus(403);
                         setErrorState(ErrorState.CLOSE_CLEAN, null);
-                    } else {
-                        Matcher m = pattern.matcher(n);
-                        if (m.matches()) {
-                            request.setAttribute(n, v);
-                        } else {
-                            response.setStatus(403);
-                            setErrorState(ErrorState.CLOSE_CLEAN, null);
-                        }
                     }
                 }
                 break;
@@ -1013,8 +1006,7 @@ public class AjpProcessor extends AbstractProcessor {
             int hC = Constants.getResponseAjpIndex(hN.toString());
             if (hC > 0) {
                 responseMessage.appendInt(hC);
-            }
-            else {
+            } else {
                 responseMessage.appendBytes(hN);
             }
             MessageBytes hV=headers.getValue(i);

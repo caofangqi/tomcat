@@ -930,8 +930,7 @@ public class Request implements HttpServletRequest {
         }
         // Take a copy to prevent ConcurrentModificationExceptions if used to
         // remove attributes
-        Set<String> names = new HashSet<>();
-        names.addAll(attributes.keySet());
+        Set<String> names = new HashSet<>(attributes.keySet());
         return Collections.enumeration(names);
     }
 
@@ -1560,12 +1559,11 @@ public class Request implements HttpServletRequest {
                     context.getServletContext(), getRequest(), name, value);
         }
 
-        for (int i = 0; i < listeners.length; i++) {
-            if (!(listeners[i] instanceof ServletRequestAttributeListener)) {
+        for (Object o : listeners) {
+            if (!(o instanceof ServletRequestAttributeListener)) {
                 continue;
             }
-            ServletRequestAttributeListener listener =
-                    (ServletRequestAttributeListener) listeners[i];
+            ServletRequestAttributeListener listener = (ServletRequestAttributeListener) o;
             try {
                 if (replaced) {
                     listener.attributeReplaced(event);
@@ -1597,12 +1595,11 @@ public class Request implements HttpServletRequest {
         ServletRequestAttributeEvent event =
                 new ServletRequestAttributeEvent(context.getServletContext(),
                         getRequest(), name, value);
-        for (int i = 0; i < listeners.length; i++) {
-            if (!(listeners[i] instanceof ServletRequestAttributeListener)) {
+        for (Object o : listeners) {
+            if (!(o instanceof ServletRequestAttributeListener)) {
                 continue;
             }
-            ServletRequestAttributeListener listener =
-                    (ServletRequestAttributeListener) listeners[i];
+            ServletRequestAttributeListener listener = (ServletRequestAttributeListener) o;
             try {
                 listener.attributeRemoved(event);
             } catch (Throwable t) {
@@ -1978,8 +1975,7 @@ public class Request implements HttpServletRequest {
         if (!isTrailerFieldsReady()) {
             throw new IllegalStateException(sm.getString("coyoteRequest.trailersNotReady"));
         }
-        Map<String,String> result = new HashMap<>();
-        result.putAll(coyoteRequest.getTrailerFields());
+        Map<String, String> result = new HashMap<>(coyoteRequest.getTrailerFields());
         return result;
     }
 
@@ -2945,6 +2941,11 @@ public class Request implements HttpServletRequest {
             try {
                 session = manager.findSession(requestedSessionId);
             } catch (IOException e) {
+                if (log.isDebugEnabled()) {
+                    log.debug(sm.getString("request.session.failed", requestedSessionId, e.getMessage()), e);
+                } else {
+                    log.info(sm.getString("request.session.failed", requestedSessionId, e.getMessage()));
+                }
                 session = null;
             }
             if ((session != null) && !session.isValid()) {

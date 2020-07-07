@@ -89,6 +89,9 @@ class StreamProcessor extends AbstractProcessor {
                                         stream.getIdAsInt());
                             }
                             stream.close(se);
+                        } else {
+                            // stream.close() will call recycle so only need it here
+                            stream.recycle();
                         }
                     }
                 } catch (Exception e) {
@@ -100,7 +103,11 @@ class StreamProcessor extends AbstractProcessor {
                     ConnectionException ce = new ConnectionException(msg, Http2Error.INTERNAL_ERROR);
                     ce.initCause(e);
                     stream.close(ce);
+                    state = SocketState.CLOSED;
                 } finally {
+                    if (state == SocketState.CLOSED) {
+                        recycle();
+                    }
                     ContainerThreadMarker.clear();
                 }
             }
@@ -147,6 +154,17 @@ class StreamProcessor extends AbstractProcessor {
         // Add the pseudo header for status
         headers.addValue(":status").setString(Integer.toString(statusCode));
 
+
+        // Compression can't be used with sendfile
+        // Need to check for compression (and set headers appropriately) before
+        // adding headers below
+        if (noSendfile && protocol != null &&
+                protocol.useCompression(coyoteRequest, coyoteResponse)) {
+            // Enable compression. Headers will have been set. Need to configure
+            // output filter at this point.
+            stream.addOutputFilter(new GzipOutputFilter());
+        }
+
         // Check to see if a response body is present
         if (!(statusCode < 200 || statusCode == 204 || statusCode == 205 || statusCode == 304)) {
             String contentType = coyoteResponse.getContentType();
@@ -177,14 +195,6 @@ class StreamProcessor extends AbstractProcessor {
         // application has already set one
         if (statusCode >= 200 && headers.getValue("date") == null) {
             headers.addValue("date").setString(FastHttpDateFormat.getCurrentDate());
-        }
-
-        // Compression can't be used with sendfile
-        if (noSendfile && protocol != null &&
-                protocol.useCompression(coyoteRequest, coyoteResponse)) {
-            // Enable compression. Headers will have been set. Need to configure
-            // output filter at this point.
-            stream.addOutputFilter(new GzipOutputFilter());
         }
     }
 

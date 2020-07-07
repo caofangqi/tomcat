@@ -204,8 +204,7 @@ public class ApplicationContext implements ServletContext {
 
     @Override
     public Enumeration<String> getAttributeNames() {
-        Set<String> names = new HashSet<>();
-        names.addAll(attributes.keySet());
+        Set<String> names = new HashSet<>(attributes.keySet());
         return Collections.enumeration(names);
     }
 
@@ -297,8 +296,7 @@ public class ApplicationContext implements ServletContext {
 
     @Override
     public Enumeration<String> getInitParameterNames() {
-        Set<String> names = new HashSet<>();
-        names.addAll(parameters.keySet());
+        Set<String> names = new HashSet<>(parameters.keySet());
         // Special handling for XML settings as these attributes will always be
         // available if they have been set on the context
         if (context.getTldValidation()) {
@@ -441,10 +439,8 @@ public class ApplicationContext implements ServletContext {
             dispatchData.set(dd);
         }
 
-        MessageBytes uriMB = dd.uriMB;
-        uriMB.recycle();
-
         // Use the thread local mapping data
+        MessageBytes uriMB = dd.uriMB;
         MappingData mappingData = dd.mappingData;
 
         try {
@@ -474,7 +470,11 @@ public class ApplicationContext implements ServletContext {
         } finally {
             // Recycle thread local data at the end of the request so references
             // are not held to a completed request as there is potential for
-            // that to trigger a memory leak if a context is unloaded.
+            // that to trigger a memory leak if a context is unloaded. Not
+            // strictly necessary here for uriMB but it needs to be recycled at
+            // some point so do it here for consistency with mappingData which
+            // must be recycled here.
+            uriMB.recycle();
             mappingData.recycle();
         }
     }
@@ -1349,10 +1349,7 @@ public class ApplicationContext implements ServletContext {
     protected void clearAttributes() {
 
         // Create list of attributes to be removed
-        List<String> list = new ArrayList<>();
-        for (String s : attributes.keySet()) {
-            list.add(s);
-        }
+        List<String> list = new ArrayList<>(attributes.keySet());
 
         // Remove application originated attributes
         // (read only attributes will be left in place)

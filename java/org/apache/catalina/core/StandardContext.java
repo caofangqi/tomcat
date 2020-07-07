@@ -2847,7 +2847,6 @@ public class StandardContext extends ContainerBase
         }
         fireContainerEvent("addApplicationListener", listener);
 
-        // FIXME - add instance if already started?
     }
 
 
@@ -2930,18 +2929,18 @@ public class StandardContext extends ContainerBase
 
         // Validate the proposed constraint
         SecurityCollection collections[] = constraint.findCollections();
-        for (int i = 0; i < collections.length; i++) {
-            String patterns[] = collections[i].findPatterns();
+        for (SecurityCollection collection : collections) {
+            String patterns[] = collection.findPatterns();
             for (int j = 0; j < patterns.length; j++) {
                 patterns[j] = adjustURLPattern(patterns[j]);
                 if (!validateURLPattern(patterns[j]))
                     throw new IllegalArgumentException
-                        (sm.getString
-                         ("standardContext.securityConstraint.pattern",
-                          patterns[j]));
+                            (sm.getString
+                                    ("standardContext.securityConstraint.pattern",
+                                            patterns[j]));
             }
-            if (collections[i].findMethods().length > 0 &&
-                    collections[i].findOmittedMethods().length > 0) {
+            if (collection.findMethods().length > 0 &&
+                    collection.findOmittedMethods().length > 0) {
                 throw new IllegalArgumentException(sm.getString(
                         "standardContext.securityConstraint.mixHttpMethod"));
             }
@@ -3061,17 +3060,11 @@ public class StandardContext extends ContainerBase
             (servletNames.length == 0) && (urlPatterns.length == 0))
             throw new IllegalArgumentException
                 (sm.getString("standardContext.filterMap.either"));
-        // FIXME: Older spec revisions may still check this
-        /*
-        if ((servletNames.length != 0) && (urlPatterns.length != 0))
-            throw new IllegalArgumentException
-                (sm.getString("standardContext.filterMap.either"));
-        */
-        for (int i = 0; i < urlPatterns.length; i++) {
-            if (!validateURLPattern(urlPatterns[i])) {
+        for (String urlPattern : urlPatterns) {
+            if (!validateURLPattern(urlPattern)) {
                 throw new IllegalArgumentException
-                    (sm.getString("standardContext.filterMap.pattern",
-                            urlPatterns[i]));
+                        (sm.getString("standardContext.filterMap.pattern",
+                                urlPattern));
             }
         }
     }
@@ -3331,11 +3324,11 @@ public class StandardContext extends ContainerBase
         }
 
         synchronized (wrapperLifecyclesLock) {
-            for (int i = 0; i < wrapperLifecycles.length; i++) {
+            for (String wrapperLifecycle : wrapperLifecycles) {
                 try {
-                    Class<?> clazz = Class.forName(wrapperLifecycles[i]);
+                    Class<?> clazz = Class.forName(wrapperLifecycle);
                     LifecycleListener listener =
-                        (LifecycleListener) clazz.getConstructor().newInstance();
+                            (LifecycleListener) clazz.getConstructor().newInstance();
                     wrapper.addLifecycleListener(listener);
                 } catch (Throwable t) {
                     ExceptionUtils.handleThrowable(t);
@@ -3346,9 +3339,9 @@ public class StandardContext extends ContainerBase
         }
 
         synchronized (wrapperListenersLock) {
-            for (int i = 0; i < wrapperListeners.length; i++) {
+            for (String wrapperListener : wrapperListeners) {
                 try {
-                    Class<?> clazz = Class.forName(wrapperListeners[i]);
+                    Class<?> clazz = Class.forName(wrapperListener);
                     ContainerListener listener =
                             (ContainerListener) clazz.getConstructor().newInstance();
                     wrapper.addContainerListener(listener);
@@ -3531,9 +3524,7 @@ public class StandardContext extends ContainerBase
      */
     @Override
     public String[] findParameters() {
-        List<String> parameterNames = new ArrayList<>(parameters.size());
-        parameterNames.addAll(parameters.keySet());
-        return parameterNames.toArray(new String[parameterNames.size()]);
+        return parameters.keySet().toArray(new String[0]);
     }
 
 
@@ -3568,8 +3559,8 @@ public class StandardContext extends ContainerBase
     public boolean findSecurityRole(String role) {
 
         synchronized (securityRolesLock) {
-            for (int i = 0; i < securityRoles.length; i++) {
-                if (role.equals(securityRoles[i]))
+            for (String securityRole : securityRoles) {
+                if (role.equals(securityRole))
                     return true;
             }
         }
@@ -3627,8 +3618,8 @@ public class StandardContext extends ContainerBase
     public boolean findWelcomeFile(String name) {
 
         synchronized (welcomeFilesLock) {
-            for (int i = 0; i < welcomeFiles.length; i++) {
-                if (name.equals(welcomeFiles[i]))
+            for (String welcomeFile : welcomeFiles) {
+                if (name.equals(welcomeFile))
                     return true;
             }
         }
@@ -3774,7 +3765,6 @@ public class StandardContext extends ContainerBase
         // Inform interested listeners
         fireContainerEvent("removeApplicationListener", listener);
 
-        // FIXME - behavior if already started?
     }
 
 
@@ -4213,8 +4203,8 @@ public class StandardContext extends ContainerBase
 
         Container[] children = findChildren();
         if (children != null) {
-            for( int i=0; i< children.length; i++ ) {
-                result += ((StandardWrapper)children[i]).getProcessingTime();
+            for (Container child : children) {
+                result += ((StandardWrapper) child).getProcessingTime();
             }
         }
 
@@ -4235,8 +4225,8 @@ public class StandardContext extends ContainerBase
 
         Container[] children = findChildren();
         if (children != null) {
-            for( int i=0; i< children.length; i++ ) {
-                time = ((StandardWrapper)children[i]).getMaxTime();
+            for (Container child : children) {
+                time = ((StandardWrapper) child).getMaxTime();
                 if (time > result)
                     result = time;
             }
@@ -4259,8 +4249,8 @@ public class StandardContext extends ContainerBase
 
         Container[] children = findChildren();
         if (children != null) {
-            for( int i=0; i< children.length; i++ ) {
-                time = ((StandardWrapper)children[i]).getMinTime();
+            for (Container child : children) {
+                time = ((StandardWrapper) child).getMinTime();
                 if (result < 0 || time < result)
                     result = time;
             }
@@ -4282,8 +4272,8 @@ public class StandardContext extends ContainerBase
 
         Container[] children = findChildren();
         if (children != null) {
-            for( int i=0; i< children.length; i++ ) {
-                result += ((StandardWrapper)children[i]).getRequestCount();
+            for (Container child : children) {
+                result += ((StandardWrapper) child).getRequestCount();
             }
         }
 
@@ -4303,8 +4293,8 @@ public class StandardContext extends ContainerBase
 
         Container[] children = findChildren();
         if (children != null) {
-            for( int i=0; i< children.length; i++ ) {
-                result += ((StandardWrapper)children[i]).getErrorCount();
+            for (Container child : children) {
+                result += ((StandardWrapper) child).getErrorCount();
             }
         }
 
@@ -4575,17 +4565,17 @@ public class StandardContext extends ContainerBase
         // Sort listeners in two arrays
         List<Object> eventListeners = new ArrayList<>();
         List<Object> lifecycleListeners = new ArrayList<>();
-        for (int i = 0; i < results.length; i++) {
-            if ((results[i] instanceof ServletContextAttributeListener)
-                || (results[i] instanceof ServletRequestAttributeListener)
-                || (results[i] instanceof ServletRequestListener)
-                || (results[i] instanceof HttpSessionIdListener)
-                || (results[i] instanceof HttpSessionAttributeListener)) {
-                eventListeners.add(results[i]);
+        for (Object result : results) {
+            if ((result instanceof ServletContextAttributeListener)
+                    || (result instanceof ServletRequestAttributeListener)
+                    || (result instanceof ServletRequestListener)
+                    || (result instanceof HttpSessionIdListener)
+                    || (result instanceof HttpSessionAttributeListener)) {
+                eventListeners.add(result);
             }
-            if ((results[i] instanceof ServletContextListener)
-                || (results[i] instanceof HttpSessionListener)) {
-                lifecycleListeners.add(results[i]);
+            if ((result instanceof ServletContextListener)
+                    || (result instanceof HttpSessionListener)) {
+                lifecycleListeners.add(result);
             }
         }
 
@@ -4594,9 +4584,7 @@ public class StandardContext extends ContainerBase
         // Put them these listeners after the ones defined in web.xml and/or
         // annotations then overwrite the list of instances with the new, full
         // list.
-        for (Object eventListener: getApplicationEventListeners()) {
-            eventListeners.add(eventListener);
-        }
+        eventListeners.addAll(Arrays.asList(getApplicationEventListeners()));
         setApplicationEventListeners(eventListeners.toArray());
         for (Object lifecycleListener: getApplicationLifecycleListeners()) {
             lifecycleListeners.add(lifecycleListener);
@@ -4626,11 +4614,11 @@ public class StandardContext extends ContainerBase
             noPluggabilityServletContext = new NoPluggabilityServletContext(getServletContext());
             tldEvent = new ServletContextEvent(noPluggabilityServletContext);
         }
-        for (int i = 0; i < instances.length; i++) {
-            if (!(instances[i] instanceof ServletContextListener))
+        for (Object instance : instances) {
+            if (!(instance instanceof ServletContextListener)) {
                 continue;
-            ServletContextListener listener =
-                (ServletContextListener) instances[i];
+            }
+            ServletContextListener listener = (ServletContextListener) instance;
             try {
                 fireContainerEvent("beforeContextInitialized", listener);
                 if (noPluggabilityListeners.contains(listener)) {
@@ -4642,9 +4630,8 @@ public class StandardContext extends ContainerBase
             } catch (Throwable t) {
                 ExceptionUtils.handleThrowable(t);
                 fireContainerEvent("afterContextInitialized", listener);
-                getLogger().error
-                    (sm.getString("standardContext.listenerStart",
-                                  instances[i].getClass().getName()), t);
+                getLogger().error(sm.getString("standardContext.listenerStart",
+                        instance.getClass().getName()), t);
                 ok = false;
             }
         }
@@ -4804,11 +4791,12 @@ public class StandardContext extends ContainerBase
 
         // Collect "load on startup" servlets that need to be initialized
         TreeMap<Integer, ArrayList<Wrapper>> map = new TreeMap<>();
-        for (int i = 0; i < children.length; i++) {
-            Wrapper wrapper = (Wrapper) children[i];
+        for (Container child : children) {
+            Wrapper wrapper = (Wrapper) child;
             int loadOnStartup = wrapper.getLoadOnStartup();
-            if (loadOnStartup < 0)
+            if (loadOnStartup < 0) {
                 continue;
+            }
             Integer key = Integer.valueOf(loadOnStartup);
             ArrayList<Wrapper> list = map.get(key);
             if (list == null) {
@@ -5171,6 +5159,12 @@ public class StandardContext extends ContainerBase
         // Reinitializing if something went wrong
         if (!ok) {
             setState(LifecycleState.FAILED);
+            // Send j2ee.object.failed notification
+            if (this.getObjectName() != null) {
+                Notification notification = new Notification("j2ee.object.failed",
+                        this.getObjectName(), sequenceNumber.getAndIncrement());
+                broadcaster.sendNotification(notification);
+            }
         } else {
             setState(LifecycleState.STARTING);
         }
@@ -5264,19 +5258,19 @@ public class StandardContext extends ContainerBase
         Map<String,String> mergedParams = new HashMap<>();
 
         String names[] = findParameters();
-        for (int i = 0; i < names.length; i++) {
-            mergedParams.put(names[i], findParameter(names[i]));
+        for (String s : names) {
+            mergedParams.put(s, findParameter(s));
         }
 
         ApplicationParameter params[] = findApplicationParameters();
-        for (int i = 0; i < params.length; i++) {
-            if (params[i].getOverride()) {
-                if (mergedParams.get(params[i].getName()) == null) {
-                    mergedParams.put(params[i].getName(),
-                            params[i].getValue());
+        for (ApplicationParameter param : params) {
+            if (param.getOverride()) {
+                if (mergedParams.get(param.getName()) == null) {
+                    mergedParams.put(param.getName(),
+                            param.getValue());
                 }
             } else {
-                mergedParams.put(params[i].getName(), params[i].getValue());
+                mergedParams.put(param.getName(), param.getValue());
             }
         }
 
@@ -5334,8 +5328,8 @@ public class StandardContext extends ContainerBase
             // Stop ContainerBackgroundProcessor thread
             threadStop();
 
-            for (int i = 0; i < children.length; i++) {
-                children[i].stop();
+            for (Container child : children) {
+                child.stop();
             }
 
             // Stop our filters
@@ -5425,7 +5419,8 @@ public class StandardContext extends ContainerBase
 
     }
 
-    /** Destroy needs to clean up the context completely.
+    /**
+     * Destroy needs to clean up the context completely.
      *
      * The problem is that undoing all the config in start() and restoring
      * a 'fresh' state is impossible. After stop()/destroy()/init()/start()
@@ -5433,9 +5428,6 @@ public class StandardContext extends ContainerBase
      * read modified web.xml, etc. This can only be done by completely
      * removing the context object and remapping a new one, or by cleaning
      * up everything.
-     *
-     * XXX Should this be done in stop() ?
-     *
      */
     @Override
     protected void destroyInternal() throws LifecycleException {
@@ -5845,13 +5837,14 @@ public class StandardContext extends ContainerBase
             ServletRequestEvent event =
                     new ServletRequestEvent(getServletContext(), request);
 
-            for (int i = 0; i < instances.length; i++) {
-                if (instances[i] == null)
+            for (Object instance : instances) {
+                if (instance == null) {
                     continue;
-                if (!(instances[i] instanceof ServletRequestListener))
+                }
+                if (!(instance instanceof ServletRequestListener)) {
                     continue;
-                ServletRequestListener listener =
-                    (ServletRequestListener) instances[i];
+                }
+                ServletRequestListener listener = (ServletRequestListener) instance;
 
                 try {
                     listener.requestInitialized(event);
@@ -5859,7 +5852,7 @@ public class StandardContext extends ContainerBase
                     ExceptionUtils.handleThrowable(t);
                     getLogger().error(sm.getString(
                             "standardContext.requestListener.requestInit",
-                            instances[i].getClass().getName()), t);
+                            instance.getClass().getName()), t);
                     request.setAttribute(RequestDispatcher.ERROR_EXCEPTION, t);
                     return false;
                 }
@@ -6155,7 +6148,8 @@ public class StandardContext extends ContainerBase
     }
 
 
-    /* Remove a JMX notificationListener
+    /**
+     * Remove a JMX notificationListener
      * @see javax.management.NotificationEmitter#removeNotificationListener(javax.management.NotificationListener, javax.management.NotificationFilter, java.lang.Object)
      */
     @Override
@@ -6166,48 +6160,43 @@ public class StandardContext extends ContainerBase
 
     private MBeanNotificationInfo[] notificationInfo;
 
-    /* Get JMX Broadcaster Info
-     * @TODO use StringManager for international support!
-     * @TODO This two events we not send j2ee.state.failed and j2ee.attribute.changed!
+    /**
+     * Get JMX Broadcaster Info
      * @see javax.management.NotificationBroadcaster#getNotificationInfo()
      */
     @Override
     public MBeanNotificationInfo[] getNotificationInfo() {
-        // FIXME: i18n
-        if(notificationInfo == null) {
-            notificationInfo = new MBeanNotificationInfo[]{
-                    new MBeanNotificationInfo(new String[] {
-                    "j2ee.object.created"},
-                    Notification.class.getName(),
-                    "web application is created"
-                    ),
-                    new MBeanNotificationInfo(new String[] {
-                    "j2ee.state.starting"},
-                    Notification.class.getName(),
-                    "change web application is starting"
-                    ),
-                    new MBeanNotificationInfo(new String[] {
-                    "j2ee.state.running"},
-                    Notification.class.getName(),
-                    "web application is running"
-                    ),
-                    new MBeanNotificationInfo(new String[] {
-                    "j2ee.state.stopping"},
-                    Notification.class.getName(),
-                    "web application start to stopped"
-                    ),
-                    new MBeanNotificationInfo(new String[] {
-                    "j2ee.object.stopped"},
-                    Notification.class.getName(),
-                    "web application is stopped"
-                    ),
-                    new MBeanNotificationInfo(new String[] {
-                    "j2ee.object.deleted"},
-                    Notification.class.getName(),
-                    "web application is deleted"
-                    )
-            };
-
+        // FIXME: we not send j2ee.attribute.changed
+        if (notificationInfo == null) {
+            notificationInfo = new MBeanNotificationInfo[] {
+                    new MBeanNotificationInfo(
+                            new String[] { "j2ee.object.created" },
+                            Notification.class.getName(),
+                            "web application is created"),
+                    new MBeanNotificationInfo(
+                            new String[] { "j2ee.state.starting" },
+                            Notification.class.getName(),
+                            "change web application is starting"),
+                    new MBeanNotificationInfo(
+                            new String[] { "j2ee.state.running" },
+                            Notification.class.getName(),
+                            "web application is running"),
+                    new MBeanNotificationInfo(
+                            new String[] { "j2ee.state.stopping" },
+                            Notification.class.getName(),
+                            "web application start to stopped"),
+                    new MBeanNotificationInfo(
+                            new String[] { "j2ee.object.stopped" },
+                            Notification.class.getName(),
+                            "web application is stopped"),
+                    new MBeanNotificationInfo(
+                            new String[] { "j2ee.object.deleted" },
+                            Notification.class.getName(),
+                            "web application is deleted"),
+                    new MBeanNotificationInfo(
+                            new String[] { "j2ee.object.failed" },
+                            Notification.class.getName(),
+                            "web application failed") };
         }
 
         return notificationInfo;

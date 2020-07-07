@@ -404,7 +404,7 @@ public class DefaultServlet extends HttpServlet {
             // gzip handling is for backwards compatibility with Tomcat 8.x
             ret.add(new CompressionFormat(".gz", "gzip"));
         }
-        return ret.toArray(new CompressionFormat[ret.size()]);
+        return ret.toArray(new CompressionFormat[0]);
     }
 
 
@@ -850,7 +850,8 @@ public class DefaultServlet extends HttpServlet {
                 response.sendError(((Integer) request.getAttribute(
                         RequestDispatcher.ERROR_STATUS_CODE)).intValue());
             } else {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                response.sendError(HttpServletResponse.SC_NOT_FOUND,
+                        sm.getString("defaultServlet.missingResource", requestUri));
             }
             return;
         }
@@ -939,7 +940,8 @@ public class DefaultServlet extends HttpServlet {
             // Skip directory listings if we have been configured to
             // suppress them
             if (!listings) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                response.sendError(HttpServletResponse.SC_NOT_FOUND,
+                        sm.getString("defaultServlet.missingResource", request.getRequestURI()));
                 return;
             }
             contentType = "text/html;charset=UTF-8";
@@ -1609,7 +1611,7 @@ public class DefaultServlet extends HttpServlet {
         sb.append("<listing ");
         sb.append(" contextPath='");
         sb.append(contextPath);
-        sb.append("'");
+        sb.append('\'');
         sb.append(" directory='");
         sb.append(resource.getName());
         sb.append("' ");
@@ -1643,25 +1645,25 @@ public class DefaultServlet extends HttpServlet {
             sb.append("<entry");
             sb.append(" type='")
               .append(childResource.isDirectory()?"dir":"file")
-              .append("'");
+              .append('\'');
             sb.append(" urlPath='")
               .append(rewrittenContextPath)
               .append(rewriteUrl(directoryWebappPath + entry))
               .append(childResource.isDirectory()?"/":"")
-              .append("'");
+              .append('\'');
             if (childResource.isFile()) {
                 sb.append(" size='")
                   .append(renderSize(childResource.getContentLength()))
-                  .append("'");
+                  .append('\'');
             }
             sb.append(" date='")
               .append(childResource.getLastModifiedHttp())
-              .append("'");
+              .append('\'');
 
-            sb.append(">");
+            sb.append('>');
             sb.append(Escape.htmlElementContent(entry));
             if (childResource.isDirectory())
-                sb.append("/");
+                sb.append('/');
             sb.append("</entry>");
         }
         sb.append("</entries>");
@@ -1779,7 +1781,7 @@ public class DefaultServlet extends HttpServlet {
                 parent = "/";
             sb.append(rewriteUrl(parent));
             if (!parent.endsWith("/"))
-                sb.append("/");
+                sb.append('/');
             sb.append("\">");
             sb.append("<b>");
             sb.append(sm.getString("directory.parent", parent));
@@ -1861,11 +1863,11 @@ public class DefaultServlet extends HttpServlet {
             sb.append(rewrittenContextPath);
             sb.append(rewriteUrl(childResource.getWebappPath()));
             if (childResource.isDirectory())
-                sb.append("/");
+                sb.append('/');
             sb.append("\"><tt>");
             sb.append(Escape.htmlElementContent(filename));
             if (childResource.isDirectory())
-                sb.append("/");
+                sb.append('/');
             sb.append("</tt></a></td>\r\n");
 
             sb.append("<td align=\"right\"><tt>");

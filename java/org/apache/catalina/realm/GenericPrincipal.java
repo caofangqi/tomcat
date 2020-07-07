@@ -164,7 +164,7 @@ public class GenericPrincipal implements TomcatPrincipal, Serializable {
         if (roles == null) {
             this.roles = new String[0];
         } else {
-            this.roles = roles.toArray(new String[roles.size()]);
+            this.roles = roles.toArray(new String[0]);
             if (this.roles.length > 1) {
                 Arrays.sort(this.roles);
             }
@@ -284,9 +284,9 @@ public class GenericPrincipal implements TomcatPrincipal, Serializable {
     public String toString() {
         StringBuilder sb = new StringBuilder("GenericPrincipal[");
         sb.append(this.name);
-        sb.append("(");
-        for (int i = 0; i < roles.length; i++ ) {
-            sb.append( roles[i]).append(",");
+        sb.append('(');
+        for (String role : roles) {
+            sb.append(role).append(',');
         }
         sb.append(")]");
         return sb.toString();

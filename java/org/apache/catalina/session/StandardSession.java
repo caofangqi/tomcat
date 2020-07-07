@@ -369,26 +369,22 @@ public class StandardSession implements HttpSession, Session, Serializable {
         if (listeners != null && listeners.length > 0) {
             HttpSessionEvent event =
                 new HttpSessionEvent(getSession());
-            for (int i = 0; i < listeners.length; i++) {
-                if (!(listeners[i] instanceof HttpSessionListener))
+            for (Object o : listeners) {
+                if (!(o instanceof HttpSessionListener))
                     continue;
-                HttpSessionListener listener =
-                    (HttpSessionListener) listeners[i];
+                HttpSessionListener listener = (HttpSessionListener) o;
                 try {
-                    context.fireContainerEvent("beforeSessionCreated",
-                            listener);
+                    context.fireContainerEvent("beforeSessionCreated", listener);
                     listener.sessionCreated(event);
                     context.fireContainerEvent("afterSessionCreated", listener);
                 } catch (Throwable t) {
                     ExceptionUtils.handleThrowable(t);
                     try {
-                        context.fireContainerEvent("afterSessionCreated",
-                                listener);
+                        context.fireContainerEvent("afterSessionCreated", listener);
                     } catch (Exception e) {
                         // Ignore
                     }
-                    manager.getContext().getLogger().error
-                        (sm.getString("standardSession.sessionEvent"), t);
+                    manager.getContext().getLogger().error (sm.getString("standardSession.sessionEvent"), t);
                 }
             }
         }
@@ -844,8 +840,8 @@ public class StandardSession implements HttpSession, Session, Serializable {
             ClassLoader oldContextClassLoader = null;
             try {
                 oldContextClassLoader = context.bind(Globals.IS_SECURITY_ENABLED, null);
-                for (int i = 0; i < keys.length; i++) {
-                    removeAttributeInternal(keys[i], notify);
+                for (String key : keys) {
+                    removeAttributeInternal(key, notify);
                 }
             } finally {
                 context.unbind(Globals.IS_SECURITY_ENABLED, oldContextClassLoader);
@@ -867,18 +863,16 @@ public class StandardSession implements HttpSession, Session, Serializable {
         // Notify ActivationListeners
         HttpSessionEvent event = null;
         String keys[] = keys();
-        for (int i = 0; i < keys.length; i++) {
-            Object attribute = attributes.get(keys[i]);
+        for (String key : keys) {
+            Object attribute = attributes.get(key);
             if (attribute instanceof HttpSessionActivationListener) {
                 if (event == null)
                     event = new HttpSessionEvent(getSession());
                 try {
-                    ((HttpSessionActivationListener)attribute)
-                        .sessionWillPassivate(event);
+                    ((HttpSessionActivationListener) attribute).sessionWillPassivate(event);
                 } catch (Throwable t) {
                     ExceptionUtils.handleThrowable(t);
-                    manager.getContext().getLogger().error
-                        (sm.getString("standardSession.attributeEvent"), t);
+                    manager.getContext().getLogger().error(sm.getString("standardSession.attributeEvent"), t);
                 }
             }
         }
@@ -903,22 +897,19 @@ public class StandardSession implements HttpSession, Session, Serializable {
         // Notify ActivationListeners
         HttpSessionEvent event = null;
         String keys[] = keys();
-        for (int i = 0; i < keys.length; i++) {
-            Object attribute = attributes.get(keys[i]);
+        for (String key : keys) {
+            Object attribute = attributes.get(key);
             if (attribute instanceof HttpSessionActivationListener) {
                 if (event == null)
                     event = new HttpSessionEvent(getSession());
                 try {
-                    ((HttpSessionActivationListener)attribute)
-                        .sessionDidActivate(event);
+                    ((HttpSessionActivationListener) attribute).sessionDidActivate(event);
                 } catch (Throwable t) {
                     ExceptionUtils.handleThrowable(t);
-                    manager.getContext().getLogger().error
-                        (sm.getString("standardSession.attributeEvent"), t);
+                    manager.getContext().getLogger().error(sm.getString("standardSession.attributeEvent"), t);
                 }
             }
         }
-
     }
 
 
@@ -1016,7 +1007,7 @@ public class StandardSession implements HttpSession, Session, Serializable {
         StringBuilder sb = new StringBuilder();
         sb.append("StandardSession[");
         sb.append(id);
-        sb.append("]");
+        sb.append(']');
         return sb.toString();
     }
 
@@ -1156,8 +1147,7 @@ public class StandardSession implements HttpSession, Session, Serializable {
             throw new IllegalStateException
                 (sm.getString("standardSession.getAttributeNames.ise"));
 
-        Set<String> names = new HashSet<>();
-        names.addAll(attributes.keySet());
+        Set<String> names = new HashSet<>(attributes.keySet());
         return Collections.enumeration(names);
     }
 
@@ -1458,11 +1448,11 @@ public class StandardSession implements HttpSession, Session, Serializable {
         if (listeners == null) {
             return;
         }
-        for (int i = 0; i < listeners.length; i++) {
-            if (!(listeners[i] instanceof HttpSessionAttributeListener)) {
+        for (Object o : listeners) {
+            if (!(o instanceof HttpSessionAttributeListener)) {
                 continue;
             }
-            HttpSessionAttributeListener listener = (HttpSessionAttributeListener) listeners[i];
+            HttpSessionAttributeListener listener = (HttpSessionAttributeListener) o;
             try {
                 if (unbound != null) {
                     if (unbound != value || manager.getNotifyAttributeListenerOnUnchangedValue()) {
@@ -1682,15 +1672,15 @@ public class StandardSession implements HttpSession, Session, Serializable {
         String keys[] = keys();
         List<String> saveNames = new ArrayList<>();
         List<Object> saveValues = new ArrayList<>();
-        for (int i = 0; i < keys.length; i++) {
-            Object value = attributes.get(keys[i]);
+        for (String key : keys) {
+            Object value = attributes.get(key);
             if (value == null) {
                 continue;
-            } else if (isAttributeDistributable(keys[i], value) && !exclude(keys[i], value)) {
-                saveNames.add(keys[i]);
+            } else if (isAttributeDistributable(key, value) && !exclude(key, value)) {
+                saveNames.add(key);
                 saveValues.add(value);
             } else {
-                removeAttributeInternal(keys[i], true);
+                removeAttributeInternal(key, true);
             }
         }
 
@@ -1780,8 +1770,8 @@ public class StandardSession implements HttpSession, Session, Serializable {
             list = listeners.toArray(list);
         }
 
-        for (int i = 0; i < list.length; i++){
-            (list[i]).sessionEvent(event);
+        for (SessionListener sessionListener : list) {
+            sessionListener.sessionEvent(event);
         }
 
     }
@@ -1837,31 +1827,26 @@ public class StandardSession implements HttpSession, Session, Serializable {
         Object listeners[] = context.getApplicationEventListeners();
         if (listeners == null)
             return;
-        for (int i = 0; i < listeners.length; i++) {
-            if (!(listeners[i] instanceof HttpSessionAttributeListener))
+        for (Object o : listeners) {
+            if (!(o instanceof HttpSessionAttributeListener)) {
                 continue;
-            HttpSessionAttributeListener listener =
-                (HttpSessionAttributeListener) listeners[i];
+            }
+            HttpSessionAttributeListener listener = (HttpSessionAttributeListener) o;
             try {
-                context.fireContainerEvent("beforeSessionAttributeRemoved",
-                        listener);
+                context.fireContainerEvent("beforeSessionAttributeRemoved", listener);
                 if (event == null) {
-                    event = new HttpSessionBindingEvent
-                        (getSession(), name, value);
+                    event = new HttpSessionBindingEvent(getSession(), name, value);
                 }
                 listener.attributeRemoved(event);
-                context.fireContainerEvent("afterSessionAttributeRemoved",
-                        listener);
+                context.fireContainerEvent("afterSessionAttributeRemoved", listener);
             } catch (Throwable t) {
                 ExceptionUtils.handleThrowable(t);
                 try {
-                    context.fireContainerEvent("afterSessionAttributeRemoved",
-                            listener);
+                    context.fireContainerEvent("afterSessionAttributeRemoved", listener);
                 } catch (Exception e) {
                     // Ignore
                 }
-                manager.getContext().getLogger().error
-                    (sm.getString("standardSession.attributeEvent"), t);
+                manager.getContext().getLogger().error(sm.getString("standardSession.attributeEvent"), t);
             }
         }
     }

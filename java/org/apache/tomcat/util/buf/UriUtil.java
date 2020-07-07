@@ -46,12 +46,11 @@ public final class UriUtil {
         } else {
             WAR_SEPARATOR = custom + "/";
             PATTERN_CUSTOM = Pattern.compile(Pattern.quote(WAR_SEPARATOR));
-            StringBuffer sb = new StringBuffer(custom.length() * 3);
+            StringBuilder sb = new StringBuilder(custom.length() * 3);
             // Deliberately use the platform's default encoding
             byte[] ba = custom.getBytes();
-            for (int j = 0; j < ba.length; j++) {
+            for (byte toEncode : ba) {
                 // Converting each byte in the buffer
-                byte toEncode = ba[j];
                 sb.append('%');
                 int low = toEncode & 0x0f;
                 int high = (toEncode & 0xf0) >> 4;

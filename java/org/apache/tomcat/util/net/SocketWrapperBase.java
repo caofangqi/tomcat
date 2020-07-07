@@ -52,8 +52,6 @@ public abstract class SocketWrapperBase<E> {
     private volatile long writeTimeout = -1;
 
     private volatile int keepAliveLeft = 100;
-    private volatile boolean upgraded = false;
-    private boolean secure = false;
     private String negotiatedProtocol = null;
 
     /*
@@ -171,10 +169,6 @@ public abstract class SocketWrapperBase<E> {
         }
     }
 
-    public boolean isUpgraded() { return upgraded; }
-    public void setUpgraded(boolean upgraded) { this.upgraded = upgraded; }
-    public boolean isSecure() { return secure; }
-    public void setSecure(boolean secure) { this.secure = secure; }
     public String getNegotiatedProtocol() { return negotiatedProtocol; }
     public void setNegotiatedProtocol(String negotiatedProtocol) {
         this.negotiatedProtocol = negotiatedProtocol;

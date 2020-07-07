@@ -680,7 +680,6 @@ public class AprEndpoint extends AbstractEndpoint<Long,Long> implements SNICallB
             AprSocketWrapper wrapper = new AprSocketWrapper(socket, this);
             connections.put(socket, wrapper);
             wrapper.setKeepAliveLeft(getMaxKeepAliveRequests());
-            wrapper.setSecure(isSSLEnabled());
             wrapper.setReadTimeout(getConnectionTimeout());
             wrapper.setWriteTimeout(getConnectionTimeout());
             getExecutor().execute(new SocketWithOptionsProcessor(wrapper));
@@ -1246,15 +1245,15 @@ public class AprEndpoint extends AbstractEndpoint<Long,Long> implements SNICallB
          */
         @Override
         public String toString() {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append("Poller");
             long[] res = new long[pollerSize * 2];
             int count = Poll.pollset(aprPoller, res);
             buf.append(" [ ");
             for (int j = 0; j < count; j++) {
-                buf.append(desc[2*j+1]).append(" ");
+                buf.append(desc[2*j+1]).append(' ');
             }
-            buf.append("]");
+            buf.append(']');
             return buf.toString();
         }
 

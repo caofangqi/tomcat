@@ -432,9 +432,7 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
 
                     return connectToServerRecursive(endpoint, clientEndpointConfiguration, path, redirectSet);
 
-                }
-
-                else {
+                } else {
                     throw new DeploymentException(sm.getString("wsWebSocketContainer.invalidStatus",
                             Integer.toString(httpResponse.status)));
                 }
@@ -485,8 +483,7 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
             success = true;
         } catch (ExecutionException | InterruptedException | SSLException |
                 EOFException | TimeoutException | URISyntaxException | AuthenticationException e) {
-            throw new DeploymentException(
-                    sm.getString("wsWebSocketContainer.httpRequestFailed"), e);
+            throw new DeploymentException(sm.getString("wsWebSocketContainer.httpRequestFailed", path), e);
         } finally {
             if (!success) {
                 channel.close();
